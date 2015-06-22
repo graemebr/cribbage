@@ -1,13 +1,12 @@
 <!DOCTYPE html>
 <html>
     <head>
-
         <meta charset = "UTF-8">
-        <!-- <script type = "text/javascript" src="src/Application.js"></script> -->
+        <title>Cribbage Game</title>
     </head>
     <body>
 
-        <canvas id = "myCanvas" width = 200 height = 100>
+<!--         <canvas id = "myCanvas" width = 200 height = 100>
             Your browser doesn't support HTML5
         </canvas>
 
@@ -20,30 +19,13 @@
                 background-color: #000000;
                 vertical-align: top;
             }
-        </style>
-
-        <script type = "text/javascript">
-            window.onload = function() {
-                //do stuff here if you want
-                //
-                if ('WebSocket' in window) {
-                    //websocket is supported!
-                    var connection = new WebSocket('ws://52.24.149.122:1337');
-                    connection.onopen = function(){
-                        console.log('connection open!');
-                    };
-                    connection.onclose = function(){
-                        console.log('connection closed');
-                    };
-                   connection.onerror = function(error){
-                        console.log('Error detected: ' + error);
-                    };
-                } else {
-                    //not supported
-                    console.log('websockets not supported');
-                }
-            };
-        </script>
+        </style> -->
+        <div id="content"></div>
+        <div>
+            <span id="status">Connecting...</span>
+            <input type="text" id="input" disabled="disabled" />
+        </div>
+        <script type= "text/javascript" src="gameclient.js"></script>
 
     </body>
 </html>
