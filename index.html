@@ -2,30 +2,35 @@
 <html>
     <head>
         <meta charset = "UTF-8">
-        <title>Cribbage Game</title>
+        <title>Cribbage</title>
+        <link rel='stylesheet' type='text/css' href='stylesheet.css'>
+        <script type= "text/javascript" src="jquery-1.11.3.js"></script>
+        <script type= "text/javascript" src="gameclient.js"></script>
     </head>
     <body>
 
-<!--         <canvas id = "myCanvas" width = 200 height = 100>
+        <canvas id = "gameCanvas">
             Your browser doesn't support HTML5
         </canvas>
 
-        <style type = "text/css">
-            body {
-                margin: 0;
-                padding: 0px;
-            }
-            #myCanvas {
-                background-color: #000000;
-                vertical-align: top;
-            }
-        </style> -->
-        <div id="content"></div>
-        <div>
-            <span id="status">Connecting...</span>
-            <input type="text" id="input" disabled="disabled" />
+        <div id="sidePanel">
+            <div id="playersPanel">
+                <h1>Players</h1>
+                <ul>
+                    <li>Becca</li>
+                    <li>Graeme</li>
+                </ul>
+
+            </div>
+            <div id="chatPanel">
+                <h1>Chat</h1>
+                <div id="content"></div>
+                <div>
+                    <span id="status">Connecting...</span>
+                    <input type="text" id="input" disabled="disabled" />
+                </div>
+            </div>
         </div>
-        <script type= "text/javascript" src="gameclient.js"></script>
 
     </body>
 </html>

@@ -1,0 +1,60 @@
+body {
+    margin: 0px;
+}
+
+#sidePanel {
+    float: right;
+    /*border: 2px solid black;*/
+    width: 20%;
+    height: 100vh;
+    background-color: #00FF00;
+}
+
+#playersPanel {
+    height: 59%;
+}
+
+#chatPanel {
+    height: 39%;
+}
+
+#content {
+    height: 150px;
+    background-color: #FFFFFF;
+    margin: 2px 2px 2px 2px;
+    border: 2px solid black;
+    border-radius: 2px;
+    padding: 5px;
+    overflow: auto;
+}
+
+h1 {
+    padding: 5px;
+    border: 2px solid black;
+    border-radius: 2px;
+    background-color: #009900;
+    margin: 2px 2px 2px 2px;
+}
+
+ul {
+    list-style-type: none;
+    padding-left: 0px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    margin: 0px;
+}
+
+li {
+    padding: 5px;
+    border: 2px solid black;
+    border-radius: 2px;
+    background-color: #FFFFFF;
+    margin: 2px 2px 2px 2px;
+}
+
+#gameCanvas {
+    float: left;
+    background-color: #00FFFF;
+    height: 100vh;
+    width: 80%;
+}

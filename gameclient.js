@@ -1,5 +1,6 @@
 window.onload = function() {
     //do stuff here if you want
+
     var content = document.getElementById("content");
     var status = document.getElementById("status");
     var input = document.getElementById("input");
