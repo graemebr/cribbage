@@ -14,20 +14,6 @@ body {
     height: 59%;
 }
 
-#chatPanel {
-    height: 39%;
-}
-
-#content {
-    height: 150px;
-    background-color: #FFFFFF;
-    margin: 2px 2px 2px 2px;
-    border: 2px solid black;
-    border-radius: 2px;
-    padding: 5px;
-    overflow: auto;
-}
-
 h1 {
     padding: 5px;
     border: 2px solid black;
@@ -52,9 +38,56 @@ li {
     margin: 2px 2px 2px 2px;
 }
 
+#chatPanel {
+    height: 39%;
+}
+
+#chatWindow {
+    height: 60%;
+    background-color: #FFFFFF;
+    margin: 2px 2px 2px 2px;
+    border: 2px solid black;
+    border-radius: 2px;
+    padding: 5px;
+    overflow: auto;
+}
+
+input {
+    width: 65%;
+    float: left;
+    margin-top: 4px;
+    margin-left: 4px;
+}
+
+button {
+    float: right;
+    border-radius: 6px;
+    margin-top: 4px;
+    margin-right: 4px;
+}
+
 #gameCanvas {
     float: left;
     background-color: #00FFFF;
     height: 100vh;
     width: 80%;
+}
+
+#connecting {
+    position: absolute;
+    top: 40%;
+    left:40%;
+}
+
+#chooseNamePanel {
+    position: absolute;
+    top: 40%;
+    left:40%;
+    background-color: #00FF00;
+    border-radius: 6px;
+    padding: 10px;
+}
+
+p {
+    margin: 0px;
 }

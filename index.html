@@ -4,16 +4,16 @@
         <meta charset = "UTF-8">
         <title>Cribbage</title>
         <link rel='stylesheet' type='text/css' href='stylesheet.css'>
-        <script type= "text/javascript" src="jquery-1.11.3.js"></script>
+        <script type= "text/javascript" src="jquery-2.1.4.js"></script>
         <script type= "text/javascript" src="gameclient.js"></script>
     </head>
     <body>
 
-        <canvas id = "gameCanvas">
+        <canvas id="gameCanvas" hidden>
             Your browser doesn't support HTML5
         </canvas>
 
-        <div id="sidePanel">
+        <div id="sidePanel" hidden>
             <div id="playersPanel">
                 <h1>Players</h1>
                 <ul>
@@ -24,13 +24,23 @@
             </div>
             <div id="chatPanel">
                 <h1>Chat</h1>
-                <div id="content"></div>
-                <div>
-                    <span id="status">Connecting...</span>
-                    <input type="text" id="input" disabled="disabled" />
-                </div>
+                <div id="chatWindow"></div>
+                <form>
+                    <input type="text"/>
+                    <button type="button">Send</button>
+                </form>
             </div>
         </div>
+
+        <div id="chooseNamePanel" hidden>
+            <form>
+                Enter your name:<br>
+                <input type="text"/>
+                <button type="button">Login</button>
+            </form>
+        </div>
+
+        <div id="connecting">...connecting...</div>
 
     </body>
 </html>

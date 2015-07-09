@@ -15,12 +15,6 @@ if (process.argv[2])
 var history = [];
 //clients
 var clients = [];
-//text colours
-var colors = ['red', 'green', 'blue', 'magenta', 'purple', 'plum', 'orange'];
-//randomize colors
-colors.sort(function(a, b) {
-    return Math.random() > 0.5;
-});
 
 //http server
 var server = http.createServer(function(request, response) {});
@@ -37,7 +31,6 @@ wsServer.on('request', function(request) {
     var connection = request.accept(null, request.origin);
     clients.push(connection);
     var userName = false;
-    var userColor = false;
 
     console.log((new Date()) + ' connection accepted');
 
@@ -50,39 +43,37 @@ wsServer.on('request', function(request) {
     }
 
     connection.on('message', function(message) {
+
         if (message.type === 'utf8') {
-            //process WebSocket message
-            if (userName === false) {
-                //client is sending username
-                userName = message.utf8Data;
+            var json;
+            try {
+                json = JSON.parse(message.utf8Data);
+            } catch (e) {
+                console.log("invalid JSON: ", message.utf8Data);
+                return;
+            }
 
-                userColor = colors.shift();
-                connection.sendUTF(JSON.stringify({
-                    type: 'color',
-                    data: userColor
-                }));
-
-                console.log('userName: ' + userName + ' color: ' + userColor);
-            } else {
+            if (json.type === 'name') {
+                userName = json.data;
+                console.log('userName: ' + userName);
+            } else if (json.type === 'chat') {
                 //client sending message
-                console.log((new Date()) + ' ' + userName + " : " + message.utf8Data);
-
+                console.log((new Date()) + ' ' + userName + " : " + json.data);
                 var messageObj = {
                     time: (new Date()).getTime(),
-                    text: message.utf8Data,
-                    author: userName,
-                    color: userColor
+                    text: json.data,
+                    author: userName
                 };
                 history.push(messageObj);
                 history = history.slice(-100);
 
                 //send message to clients
-                var json = JSON.stringify({
+                var jsonMessage = JSON.stringify({
                     type: 'message',
                     data: messageObj
                 });
                 for (var i = 0; i < clients.length; i++) {
-                    clients[i].sendUTF(json);
+                    clients[i].sendUTF(jsonMessage);
                 }
             }
         }
@@ -90,12 +81,10 @@ wsServer.on('request', function(request) {
 
     connection.on('close', function(con) {
         //user connection closed
-        if (userName !== false && userColor !== false) {
+        if (userName !== false) {
             console.log((new Date()) + " Client " + connection.remoteAddress + " disconnected");
             //remove client from array
             clients.splice(clients.indexOf(connection), 1);
-            // return user color to pool
-            colors.push(userColor);
         }
     });
 });
