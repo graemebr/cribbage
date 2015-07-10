@@ -1,20 +1,26 @@
 //set the process name (for use with commands like 'ps')
 process.title = 'gameserver';
 
+
 //modules
 var WebSocketServer = require('websocket').server;
 var http = require('http');
+
 
 //optionally run server with a port specified on the command line
 var webSocketsServerPort = 1337;
 if (process.argv[2])
     webSocketsServerPort = process.argv[2];
 
-//chat example variables
-//hitory of messages
-var history = [];
-//clients
-var clients = [];
+
+//chat
+//history of messages
+var chatHistory = [];
+
+//list of clients
+var clientIds = [];
+var clientData = {};
+var genPlayerId = 0;
 
 //http server
 var server = http.createServer(function(request, response) {});
@@ -28,21 +34,38 @@ wsServer = new WebSocketServer({
 wsServer.on('request', function(request) {
     console.log((new Date()) + ' connection from ' + request.origin);
 
-    var connection = request.accept(null, request.origin);
-    clients.push(connection);
-    var userName = false;
+    var playerId = 'p' + genPlayerId++;
+    clientData[playerId] = {
+        connection: request.accept(null, request.origin),
+        name: false
+    };
+    clientIds.push(playerId);
 
     console.log((new Date()) + ' connection accepted');
 
-    //send chat history
-    if (history.length > 0) {
-        connection.sendUTF(JSON.stringify({
-            type: 'history',
-            data: history
+    //send connected players
+    for (var i = 0; i < clientIds.length; i++) {
+        var id = clientIds[i];
+        if (clientData[id].name !== false) {
+            clientData[playerId].connection.sendUTF(JSON.stringify({
+                type: 'playerJoin',
+                data: {
+                    name: clientData[id].name,
+                    id: id
+                }
+            }));
+        }
+    }
+
+    //send chat chatHistory
+    if (chatHistory.length > 0) {
+        clientData[playerId].connection.sendUTF(JSON.stringify({
+            type: 'chatHistory',
+            data: chatHistory
         }));
     }
 
-    connection.on('message', function(message) {
+    clientData[playerId].connection.on('message', function(message) {
 
         if (message.type === 'utf8') {
             var json;
@@ -54,39 +77,67 @@ wsServer.on('request', function(request) {
             }
 
             if (json.type === 'name') {
-                userName = json.data;
-                console.log('userName: ' + userName);
+                handleNameMessage(json.data);
             } else if (json.type === 'chat') {
-                //client sending message
-                console.log((new Date()) + ' ' + userName + " : " + json.data);
-                var messageObj = {
-                    time: (new Date()).getTime(),
-                    text: json.data,
-                    author: userName
-                };
-                history.push(messageObj);
-                history = history.slice(-100);
-
-                //send message to clients
-                var jsonMessage = JSON.stringify({
-                    type: 'message',
-                    data: messageObj
-                });
-                for (var i = 0; i < clients.length; i++) {
-                    clients[i].sendUTF(jsonMessage);
-                }
+                handleChatMessage(json.data);
             }
         }
     });
 
-    connection.on('close', function(con) {
+    clientData[playerId].connection.on('close', function(con) {
         //user connection closed
-        if (userName !== false) {
-            console.log((new Date()) + " Client " + connection.remoteAddress + " disconnected");
-            //remove client from array
-            clients.splice(clients.indexOf(connection), 1);
+        console.log((new Date()) + " Client " + clientData[playerId].connection.remoteAddress + " disconnected");
+        //remove client from clientIds
+        clientIds.splice(clientIds.indexOf(playerId), 1);
+        if(clientData[playerId].name !== false) {
+            //remove from all clients
+            for(var i = 0; i<clientIds.length; i++) {
+                clientData[clientIds[i]].connection.sendUTF(JSON.stringify({
+                    type: 'playerLeave',
+                    data: {
+                        name: clientData[playerId].name,
+                        id: playerId
+                    }
+                }));
+            }
         }
     });
+
+    function handleNameMessage(name) {
+        clientData[playerId].name = name;
+        console.log('new user: ' + name);
+        //send message to clients
+        var json = JSON.stringify({
+            type: 'playerJoin',
+            data: {
+                name: name,
+                id: playerId
+            }
+        });
+        for (var i = 0; i < clientIds.length; i++) {
+            clientData[clientIds[i]].connection.sendUTF(json);
+        }
+    }
+
+    function handleChatMessage(text) {
+        console.log((new Date()) + ' ' + clientData[playerId].name + " : " + text);
+
+        var chatMessage = {
+            text: text,
+            author: clientData[playerId].name
+        };
+        chatHistory.push(chatMessage);
+        chatHistory = chatHistory.slice(-100);
+
+        //send message to clients
+        var json = JSON.stringify({
+            type: 'chatMessage',
+            data: chatMessage
+        });
+        for (var i = 0; i < clientIds.length; i++) {
+            clientData[clientIds[i]].connection.sendUTF(json);
+        }
+    }
 });
 
 console.log((new Date()) + ' game server started');

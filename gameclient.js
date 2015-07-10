@@ -41,13 +41,25 @@ window.onload = function() {
             return;
         }
 
-        if (json.type === 'history') {
+        if (json.type === 'chatHistory') {
             for (var i = 0; i < json.data.length; i++) {
-                addMessage(json.data[i]);
+                addChatMessage(json.data[i]);
             }
-        } else if (json.type === 'message') {
-            addMessage(json.data);
+        } else if (json.type === 'chatMessage') {
+            addChatMessage(json.data);
             $('#chatPanel input')[0].disabled = false;
+        } else if (json.type === 'playerJoin') {
+            var playerName = document.createElement('li');
+            playerName.appendChild(document.createTextNode(json.data.name));
+            playerName.style.display = 'none';
+            playerName.setAttribute('id', json.data.id);
+            console.log(json.data.id);
+            $('#playersPanel ul').append(playerName);
+            $('#' + json.data.id).fadeIn('slow');
+            addMessage(json.data.name + ' connected', 'notice');
+        } else if (json.type === 'playerLeave') {
+            $('#'+json.data.id).fadeOut('slow');
+            addMessage(json.data.name + ' disconnected', 'error');
         }
     };
 
@@ -57,7 +69,7 @@ window.onload = function() {
 
             var msg = this.value;
             if (!msg) {
-                return;
+                return false;
             }
 
             myName = msg;
@@ -81,7 +93,7 @@ window.onload = function() {
         console.log("Clicked!!");
         var msg = $('#chooseNamePanel input')[0].value;
         if (!msg) {
-            return;
+            return false;
         }
 
         myName = msg;
@@ -105,7 +117,7 @@ window.onload = function() {
             //enter key
             var msg = this.value;
             if (!msg) {
-                return;
+                return false;
             }
 
             var jsonMessage = JSON.stringify({
@@ -122,7 +134,7 @@ window.onload = function() {
     $('#chatPanel button').click(function(event) {
         var msg = $('#chatPanel input')[0].value;
         if (!msg) {
-            return;
+            return false;
         }
 
         var jsonMessage = JSON.stringify({
@@ -136,15 +148,24 @@ window.onload = function() {
         $('#chatPanel input')[0].disabled = true;
     });
 
-    function addMessage(msgData) {
+    function addChatMessage(msgData) {
+        var nameNode = document.createElement('span');
+        nameNode.setAttribute('class', 'name');
+        nameNode.appendChild(document.createTextNode(msgData.author + ': '));
         var messageNode = document.createElement('p');
-        // var t = document.createTextNode(msgData.time + '\t' + msgData.author + ': ' + msgData.text);
-        var t = document.createTextNode(msgData.author + ': ' + msgData.text);
-        messageNode.appendChild(t);
-        //content.insertBefore(messageNode, content.firstChild);
+        messageNode.appendChild(nameNode);
+        messageNode.appendChild(document.createTextNode(msgData.text));
         chatWindow.appendChild(messageNode);
 
         chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
 
+    function addMessage(msg, cssClass) {
+        var messageNode = document.createElement('p');
+        messageNode.appendChild(document.createTextNode(msg));
+        messageNode.setAttribute('class', cssClass);
+        chatWindow.appendChild(messageNode);
+
+        chatWindow.scrollTop = chatWindow.scrollHeight;
     }
 };
