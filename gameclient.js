@@ -55,7 +55,7 @@ var GameClient = (function() {
                     return false;
                 }
 
-                selfS.messageManager.send({
+                self.messageManager.send({
                     type: 'name',
                     data: msg
                 });
