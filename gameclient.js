@@ -61,6 +61,12 @@ window.onload = function() {
     //chat window
     var chatWindow = document.getElementById("chatWindow");
 
+    var chatHistory = subpub.subscribe('chatHistory', function(history) {
+        for (var i = 0; i < history.length; i++) {
+            subpub.publish('chatMessage',history[i]);
+        }
+    });
+
     var chatMessage = subpub.subscribe('chatMessage', function(msgData) {
         var nameNode = document.createElement('span');
         nameNode.setAttribute('class', 'name');
@@ -97,6 +103,28 @@ window.onload = function() {
         $('#connecting').text("error connecting to server");
     });
 
+    var playerJoin = subpub.subscribe('playerJoin', function(player) {
+        var playerName = document.createElement('li');
+        playerName.appendChild(document.createTextNode(player.name));
+        playerName.style.display = 'none';
+        playerName.setAttribute('id', player.id);
+        console.log(player.id);
+        $('#playersPanel ul').append(playerName);
+        $('#' + player.id).fadeIn('slow');
+        subpub.publish('chatAlert', {
+            msg: player.name + ' connected',
+            cssClass: 'notice'
+        });
+    });
+
+    var playerLeave = subpub.subscribe('playerLeave', function(player) {
+        $('#' + player.id).fadeOut('slow');
+        subpub.publish('chatAlert', {
+            msg: player.name + ' disconnected',
+            cssClass: 'error'
+        });
+    });
+
     if (!('WebSocket' in window)) {
         console.log('websockets not supported');
         return;
@@ -127,37 +155,7 @@ window.onload = function() {
             console.log("invalid JSON: ", message.data);
             return;
         }
-
-        switch (msg.type) {
-            case 'chatHistory':
-                for (var i = 0; i < msg.data.length; i++) {
-                    subpub.publish('chatMessage',msg.data[i]);
-                }
-                break;
-            case 'chatMessage':
-                subpub.publish('chatMessage',msg.data);
-                break;
-            case 'playerJoin':
-                var playerName = document.createElement('li');
-                playerName.appendChild(document.createTextNode(msg.data.name));
-                playerName.style.display = 'none';
-                playerName.setAttribute('id', msg.data.id);
-                console.log(msg.data.id);
-                $('#playersPanel ul').append(playerName);
-                $('#' + msg.data.id).fadeIn('slow');
-                subpub.publish('chatAlert', {
-                    msg: msg.data.name + ' connected',
-                    cssClass: 'notice'
-                });
-                break;
-            case 'playerLeave':
-                $('#' + msg.data.id).fadeOut('slow');
-                subpub.publish('chatAlert', {
-                    msg: msg.data.name + ' disconnected',
-                    cssClass: 'error'
-                });
-                break;
-        }
+        subpub.publish(msg.type, msg.data);
     };
 
     var server = subpub.subscribe('server', function(obj) {
