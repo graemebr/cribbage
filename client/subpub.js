@@ -8,7 +8,7 @@ var subpub = (function() {
     //dictionary of all the events -> list of their subscribers
     var events = {};
     return {
-        publish: function(event, data) {
+        emit: function(event, data) {
             if (events[event]) {
                 for (var i = 0; i < events[event].length; i++) {
                     //put a try catch so if one subscriber fails the others will still execute.
@@ -21,7 +21,7 @@ var subpub = (function() {
                 }
             }
         },
-        subscribe: function(event, callback) {
+        on: function(event, callback) {
             if (!events[event]) {
                 //no subscriptions have been added for this even yet
                 //add a list of subscribers to that event
@@ -37,7 +37,7 @@ var subpub = (function() {
             //id for unsubscribing
             return subscriptionID;
         },
-        unsubscribe: function(id) {
+        off: function(id) {
             for (var i in events) {
                 if (events.hasOwnProperty(i)) {
                     for (var j = 0; j < events[i].length; j++) {
