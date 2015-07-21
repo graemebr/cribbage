@@ -53,6 +53,10 @@ module.exports = (function() {
                 id: clientId
             }
         });
+        subpub.emit('playerJoin', {
+            name: name,
+            id: clientId
+        });
     });
 
     return ({
@@ -95,9 +99,17 @@ module.exports = (function() {
                             id: clientId
                         }
                     });
+                    subpub.emit('playerLeave', {
+                        name: clientData[clientId].name,
+                        id: clientId
+                    });
                 }
             });
 
+            subpub.emit('toClient', clientId, {
+                event: 'clientId',
+                data: clientId
+            });
             subpub.emit('newClient', clientId);
         },
 

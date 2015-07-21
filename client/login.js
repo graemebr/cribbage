@@ -35,6 +35,7 @@ function login() {
         $('#connecting').hide();
         //show login screen
         $('#chooseNamePanel').show();
+        $('#chooseNamePanel input')[0].focus();
     });
 
     var errorScreen = subpub.on('errorScreen', function() {

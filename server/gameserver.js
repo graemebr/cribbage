@@ -8,7 +8,7 @@ var WebSocketServer = require('websocket').server;
 var http = require('http');
 var clients = require('./clients');
 var chat = require('./chat');
-
+var teams = require('./teams');
 
 
 //optionally run server with a port specified on the command line
