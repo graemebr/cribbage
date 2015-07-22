@@ -13,9 +13,8 @@ function login() {
 
         //hide login/name choosing screen
         $('#chooseNamePanel').hide();
-        //show main game screens
-        $('#gameCanvas').show();
-        $('#sidePanel').show();
+
+        subpub.emit('loginScreenSubmitted');
     };
 
     $('#chooseNamePanel input').keydown(function(event) {

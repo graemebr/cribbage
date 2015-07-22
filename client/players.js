@@ -104,9 +104,6 @@ function players() {
             msg: player.name + ' disconnected',
             cssClass: 'error'
         });
-
-        //TODO:
-        //adjust the team options for each li
     });
 
     var updateTeam = subpub.on('server/updateTeam', function(player) {
@@ -124,6 +121,26 @@ function players() {
             $('#' + teams.green[i] + ' .selected').css('backgroundColor', 'green');
         }
     });
+
+    var startGame = subpub.on('server/startGame', function(teams) {
+        console.log('start game');
+        //unsubscribe to playerJoin event
+        subpub.off(playerJoin);
+        //switch own player from selectBox to teamBox
+        $('#' + globals.clientId + ' .selectBox').remove();
+        $('#' + globals.clientId)[0].appendChild(createTeamBox());
+        //set final team colors
+        for (var i = 0; i < teams.red.length; i++) {
+             $('#' + teams.red[i] + ' .selected').css('backgroundColor', 'red');
+        }
+        for (i = 0; i < teams.blue.length; i++) {
+            $('#' + teams.blue[i] + ' .selected').css('backgroundColor', 'blue');
+        }
+        for (i = 0; i < teams.green.length; i++) {
+            $('#' + teams.green[i] + ' .selected').css('backgroundColor', 'green');
+        }
+    });
+
 }
 
 

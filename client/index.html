@@ -10,13 +10,17 @@
         <script type= "text/javascript" src="login.js"></script>
         <script type= "text/javascript" src="chat.js"></script>
         <script type= "text/javascript" src="players.js"></script>
+        <script type= "text/javascript" src="gameUI.js"></script>
         <script type= "text/javascript" src="gameclient.js"></script>
     </head>
     <body>
 
-        <canvas id="gameCanvas" hidden>
-            Your browser doesn't support HTML5
-        </canvas>
+        <div id="gamePanel" hidden>
+            <canvas id="gameCanvas">
+                Your browser doesn't support HTML5
+            </canvas>
+            <button type="button" id="startButton" hidden>Start Game</button>
+        </div>
 
         <div id="sidePanel" hidden>
             <div id="playersPanel">

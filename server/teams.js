@@ -84,8 +84,18 @@ module.exports = (function() {
         return false;
     };
 
+    var cementTeams = function() {
+        //remove all callbacks for changing teams
+        subpub.removeListener('client/setTeam', setTeamCallback);
+        subpub.removeListener('playerJoin', playerJoinCallback);
+        subpub.removeListener('playerLeave', playerLeaveCallback);
+        subpub.removeListener('newClient', newClientCallback);
+        subpub.removeListener('client/startGame', startGameCallback);
 
-    subpub.on('client/setTeam', function(clientId, team) {
+        //TODO: new callback for playerLeave events
+    };
+
+    var setTeamCallback = function(clientId, team) {
         console.log('team: ' + team);
         remove(clientId);
         switch (team) {
@@ -109,11 +119,19 @@ module.exports = (function() {
         });
 
         if (validateTeams()) {
-            subpub.emit('validTeams');
+            subpub.emit('toAllClients', {
+                event: 'validTeams'
+            });
+        } else {
+            subpub.emit('toAllClients', {
+                event: 'invalidTeams'
+            });
         }
-    });
+    };
 
-    subpub.on('playerJoin', function(data) {
+    subpub.on('client/setTeam', setTeamCallback);
+
+    var playerJoinCallback = function(data) {
         var team;
 
         if (numPlayers === 3) {
@@ -132,20 +150,37 @@ module.exports = (function() {
         });
 
         if (validateTeams()) {
-            subpub.emit('validTeams');
+            subpub.emit('toAllClients', {
+                event: 'validTeams'
+            });
+        } else {
+            subpub.emit('toAllClients', {
+                event: 'invalidTeams'
+            });
         }
-    });
+    };
 
-    subpub.on('playerLeave', function(data) {
+    subpub.on('playerJoin', playerJoinCallback);
+
+
+    var playerLeaveCallback = function(data) {
         remove(data.id);
         numPlayers--;
 
         if (validateTeams()) {
-            subpub.emit('validTeams');
+            subpub.emit('toAllClients', {
+                event: 'validTeams'
+            });
+        } else {
+            subpub.emit('toAllClients', {
+                event: 'invalidTeams'
+            });
         }
-    });
+    };
 
-    subpub.on('newClient', function(clientId) {
+    subpub.on('playerLeave', playerLeaveCallback);
+
+    var newClientCallback = function(clientId) {
         subpub.emit('toClient', clientId, {
             event: 'currentTeams',
             data: {
@@ -154,9 +189,30 @@ module.exports = (function() {
                 green: green
             }
         });
-    });
-
-    return {
-        validate: validateTeams
     };
+
+    subpub.on('newClient', newClientCallback);
+
+    var startGameCallback = function() {
+        console.log('start game');
+        if (validateTeams()) {
+            console.log('valid teams');
+            //can start game
+            //cement teams to disallow changes
+            cementTeams();
+            //tell clients game has started and final teams
+            subpub.emit('toAllClients', {
+                event: 'startGame',
+                data: {
+                    red: red,
+                    blue: blue,
+                    green: green
+                }
+            });
+        }
+    };
+
+    subpub.on('client/startGame', startGameCallback);
+
+    return {};
 })();
