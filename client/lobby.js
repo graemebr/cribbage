@@ -24,12 +24,18 @@ function lobby() {
             });
 
             $('#lobbyPanel').hide();
-         });
+            $('#lobbyPanel ul').empty();
+        });
 
         $('#' + game.gameId).fadeIn('slow');
     }
 
     subpub.on('server/newGameCreated', createGameLI);
+
+    function removeGameLI(gameId) {
+        $('#' + gameId).remove();
+    }
+    subpub.on('server/removeGame', removeGameLI);
 
     function handleNewGameSubmit(text) {
         if (!text) {

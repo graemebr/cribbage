@@ -17,6 +17,7 @@ var tempGames = []; //TODO: REMOVE
 function Game(name) {
     EventEmitter.call(this);
     this.clients = {};
+    this.numClients = 0;
     this.gameId = 'g' + (++genGameId);
     this.name = name;
     var self = this;
@@ -31,6 +32,7 @@ function Game(name) {
 
         client.setSection(self);
         self.clients[client.clientId] = client;
+        self.numClients++;
         self.emit(client.clientId, {
             event: 'gameSetupScreen'
         });
@@ -46,10 +48,19 @@ function Game(name) {
 
     function onClientClose(clientId) {
         var name =  self.clients[clientId].name;
-        self.clients[clientId] = null;
+        self.clients[clientId] = null;  //TODO: ensure no memory leak
+        self.numClients--;
         self.emit('game/playerLeave', clientId, name);
+        if(self.numClients <= 0) {
+            subpub.emit('game/gameEmpty', self.gameId);
+        }
     }
     this.on('client/clientClose', onClientClose);
+
+    function onStartGame() {
+        subpub.emit('game/gameStarted', self.gameId);
+    }
+    this.on('teams/startGame', onStartGame);
 }
 
 function Lobby() {
@@ -110,8 +121,32 @@ function Lobby() {
             event: 'newGameCreated',
             data: gameData
         });
+        onClientJoinGame(clientId, gameData.gameId);
     }
     this.on('client/createGame', onClientCreateGame);
+
+    function onGameStarted(gameId) {
+        for (var i = 0; i < self.gameList.length; i++) {
+            if(self.gameList[i].gameId === gameId) {
+                self.gameList.splice(i,1);
+            }
+        }
+        self.emit('allClients', {
+            event: 'removeGame',
+            data: gameId
+        });
+    }
+    subpub.on('game/gameStarted', onGameStarted);
+
+    function onGameEmpty(gameId) {
+        for (var i = 0; i < tempGames.length; i++) {
+            if(tempGames[i].gameId === gameId) {
+                tempGames.splice(i,1);
+            }
+        }
+        onGameStarted(gameId);
+    }
+    subpub.on('game/gameEmpty', onGameEmpty);
 }
 
 util.inherits(Game, EventEmitter);
