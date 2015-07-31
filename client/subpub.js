@@ -9,6 +9,7 @@ var subpub = (function() {
     var events = {};
     return {
         emit: function(event, data) {
+            // console.log('emit: ' + event);
             if (events[event]) {
                 for (var i = 0; i < events[event].length; i++) {
                     //put a try catch so if one subscriber fails the others will still execute.

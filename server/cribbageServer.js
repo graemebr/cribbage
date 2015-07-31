@@ -1,14 +1,14 @@
 //set the process name
-process.title = 'gameserver';
+process.title = 'cribbageServer';
 
 
 
-//modules
 var WebSocketServer = require('websocket').server;
 var http = require('http');
-var clients = require('./clients');
-var chat = require('./chat');
-var teams = require('./teams');
+
+var subpub = require('./subpub');
+var games = require('./games');
+
 
 
 //optionally run server with a port specified on the command line
@@ -29,7 +29,8 @@ wsServer = new WebSocketServer({
 //handle new WebSocket connection
 wsServer.on('request', function(request) {
     console.log('connection from ' + request.origin);
-    clients.add(request.accept(null, request.origin)); //TODO: check request origin
+    var connection = request.accept(null, request.origin); //TODO: check request origin
+    subpub.emit('cribbageServer/newClient', connection);
     console.log('connection accepted');
 });
 

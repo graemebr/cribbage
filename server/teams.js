@@ -1,63 +1,62 @@
-var subpub = require('./subpub');
+module.exports = function(section) {
 
-module.exports = (function() {
     var red = [],
         blue = [],
         green = [];
     var numPlayers = 0;
 
-    var addToSmallest = function(id) {
+    var addToSmallest = function(clientId) {
         if (red.length <= blue.length) {
             if (red.length <= green.length) {
                 //red
-                red.push(id);
+                red.push(clientId);
                 return 'red';
             } else {
                 //green
-                green.push(id);
+                green.push(clientId);
                 return 'green';
             }
         } else {
             if (blue.length <= green.length) {
                 //blue
-                blue.push(id);
+                blue.push(clientId);
                 return 'blue';
             } else {
                 //green
-                green.push(id);
+                green.push(clientId);
                 return 'green';
             }
         }
     };
 
-    var addToSizeOne = function(id) {
+    var addToSizeOne = function(clientId) {
         if (red.length === 1) {
             //red
-            red.push(id);
+            red.push(clientId);
             return 'red';
         } else if (blue.length === 1) {
             //blue
-            blue.push(id);
+            blue.push(clientId);
             return 'blue';
         } else if (green.length === 1) {
             //green
-            green.push(id);
+            green.push(clientId);
             return 'green';
         } else {
-            return addToSmallest(id);
+            return addToSmallest(clientId);
         }
     };
 
-    var remove = function(id) {
-        if (!removeFromArray(red, id)) {
-            if (!removeFromArray(blue, id)) {
-                removeFromArray(green, id);
+    var remove = function(clientId) {
+        if (!removeFromArray(red, clientId)) {
+            if (!removeFromArray(blue, clientId)) {
+                removeFromArray(green, clientId);
             }
         }
     };
 
-    var removeFromArray = function(arr, id) {
-        var index = arr.indexOf(id);
+    var removeFromArray = function(arr, clientId) {
+        var index = arr.indexOf(clientId);
         if (index === -1) {
             return false;
         }
@@ -86,13 +85,12 @@ module.exports = (function() {
 
     var cementTeams = function() {
         //remove all callbacks for changing teams
-        subpub.removeListener('client/setTeam', setTeamCallback);
-        subpub.removeListener('playerJoin', playerJoinCallback);
-        subpub.removeListener('playerLeave', playerLeaveCallback);
-        subpub.removeListener('newClient', newClientCallback);
-        subpub.removeListener('client/startGame', startGameCallback);
+        section.removeListener('client/setTeam', setTeamCallback);
+        section.removeListener('game/playerJoin', playerJoinCallback);
+        section.removeListener('game/playerLeave', playerLeaveCallback);
+        section.removeListener('client/startGame', startGameCallback);
 
-        //TODO: new callback for playerLeave events
+        //TODO: add new callback for playerLeave events
     };
 
     var setTeamCallback = function(clientId, team) {
@@ -110,78 +108,29 @@ module.exports = (function() {
                 break;
         }
 
-        subpub.emit('toAllClients', {
+        section.emit('allClients', {
             event: 'updateTeam',
             data: {
-                id: clientId,
+                clientId: clientId,
                 team: team
             }
         });
 
         if (validateTeams()) {
-            subpub.emit('toAllClients', {
+            section.emit('allClients', {
                 event: 'validTeams'
             });
         } else {
-            subpub.emit('toAllClients', {
+            section.emit('allClients', {
                 event: 'invalidTeams'
             });
         }
     };
+    section.on('client/setTeam', setTeamCallback);
 
-    subpub.on('client/setTeam', setTeamCallback);
-
-    var playerJoinCallback = function(data) {
-        var team;
-
-        if (numPlayers === 3) {
-            team = addToSizeOne(data.id);
-        } else {
-            team = addToSmallest(data.id);
-        }
-        numPlayers++;
-
-        subpub.emit('toAllClients', {
-            event: 'updateTeam',
-            data: {
-                id: data.id,
-                team: team
-            }
-        });
-
-        if (validateTeams()) {
-            subpub.emit('toAllClients', {
-                event: 'validTeams'
-            });
-        } else {
-            subpub.emit('toAllClients', {
-                event: 'invalidTeams'
-            });
-        }
-    };
-
-    subpub.on('playerJoin', playerJoinCallback);
-
-
-    var playerLeaveCallback = function(data) {
-        remove(data.id);
-        numPlayers--;
-
-        if (validateTeams()) {
-            subpub.emit('toAllClients', {
-                event: 'validTeams'
-            });
-        } else {
-            subpub.emit('toAllClients', {
-                event: 'invalidTeams'
-            });
-        }
-    };
-
-    subpub.on('playerLeave', playerLeaveCallback);
-
-    var newClientCallback = function(clientId) {
-        subpub.emit('toClient', clientId, {
+    var playerJoinCallback = function(clientId) {
+        //send new player current teams
+        section.emit(clientId, {
             event: 'currentTeams',
             data: {
                 red: red,
@@ -189,9 +138,51 @@ module.exports = (function() {
                 green: green
             }
         });
-    };
 
-    subpub.on('newClient', newClientCallback);
+        var team;
+
+        if (numPlayers === 3) {
+            team = addToSizeOne(clientId);
+        } else {
+            team = addToSmallest(clientId);
+        }
+        numPlayers++;
+
+        section.emit('allClients', {
+            event: 'updateTeam',
+            data: {
+                clientId: clientId,
+                team: team
+            }
+        });
+
+        if (validateTeams()) {
+            section.emit('allClients', {
+                event: 'validTeams'
+            });
+        } else {
+            section.emit('allClients', {
+                event: 'invalidTeams'
+            });
+        }
+    };
+    section.on('game/playerJoin', playerJoinCallback);
+
+    var playerLeaveCallback = function(clientId) {
+        remove(clientId);
+        numPlayers--;
+
+        if (validateTeams()) {
+            section.emit('allClients', {
+                event: 'validTeams'
+            });
+        } else {
+            section.emit('allClients', {
+                event: 'invalidTeams'
+            });
+        }
+    };
+    section.on('game/playerLeave', playerLeaveCallback);
 
     var startGameCallback = function() {
         console.log('start game');
@@ -201,18 +192,17 @@ module.exports = (function() {
             //cement teams to disallow changes
             cementTeams();
             //tell clients game has started and final teams
-            subpub.emit('toAllClients', {
-                event: 'startGame',
+            section.emit('allClients', {
+                event: 'finalTeams',
                 data: {
                     red: red,
                     blue: blue,
                     green: green
                 }
             });
+            //tell rest of server that game is started
+            section.emit('teams/startGame');
         }
     };
-
-    subpub.on('client/startGame', startGameCallback);
-
-    return {};
-})();
+    section.on('client/startGame', startGameCallback);
+};

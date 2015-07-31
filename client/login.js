@@ -5,7 +5,7 @@ function login() {
         }
 
         subpub.emit('toServer', {
-            event: 'name',
+            event: 'login',
             data: msg
         });
 
@@ -13,8 +13,6 @@ function login() {
 
         //hide login/name choosing screen
         $('#chooseNamePanel').hide();
-
-        subpub.emit('loginScreenSubmitted');
     };
 
     $('#chooseNamePanel input').keydown(function(event) {

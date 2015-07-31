@@ -11,6 +11,7 @@
         <script type= "text/javascript" src="chat.js"></script>
         <script type= "text/javascript" src="players.js"></script>
         <script type= "text/javascript" src="gameUI.js"></script>
+        <script type= "text/javascript" src="lobby.js"></script>
         <script type= "text/javascript" src="gameclient.js"></script>
     </head>
     <body>
@@ -19,7 +20,10 @@
             <canvas id="gameCanvas">
                 Your browser doesn't support HTML5
             </canvas>
-            <button type="button" id="startButton" hidden>Start Game</button>
+            <div id="startLeave">
+                <button type="button" id="startButton" hidden>Start Game</button>
+                <button type="button" id="leaveButton">Leave Game</button>
+            </div>
         </div>
 
         <div id="sidePanel" hidden>
@@ -35,6 +39,15 @@
                     <button type="button">Send</button>
                 </form>
             </div>
+        </div>
+
+        <div id="lobbyPanel" hidden>
+            <h1>Lobby</h1>
+            <ul class="gameList"></ul>
+            <form>
+                <input type="text"/>
+                <button type="button">Create Game</button>
+            </form>
         </div>
 
         <div id="chooseNamePanel" hidden>

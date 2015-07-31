@@ -2,6 +2,9 @@
 function players() {
     //setup DOM stuff
     //
+    //
+    var unusedPlayerTeams = {};
+
     var createSelectOption = function(htmlClass) {
         var selectOption = document.createElement('span');
         selectOption.setAttribute('class', htmlClass);
@@ -42,7 +45,7 @@ function players() {
                 $(this).parent().css('display', 'none');
                 $(this).parent().siblings('.selected').css('backgroundColor', $(this).css('backgroundColor'));
                 var team = '';
-                switch($(this)[0].className) {
+                switch ($(this)[0].className) {
                     case 'redTeam':
                         team = 'red';
                         break;
@@ -78,51 +81,69 @@ function players() {
         playerName.appendChild(document.createTextNode(player.name));
         playerName.style.display = 'none';
         playerName.setAttribute('class', 'playerLI');
-        playerName.setAttribute('id', player.id);
+        playerName.setAttribute('id', player.clientId);
 
-        if (globals.clientId === player.id) {
+        if (globals.clientId === player.clientId) {
             playerName.appendChild(createSelectBox());
         } else {
             playerName.appendChild(createTeamBox());
         }
 
         $('#playersPanel ul').append(playerName);
-        $('#' + player.id).fadeIn('slow');
+
+        if(unusedPlayerTeams[player.clientId]) {
+            updatePlayerColor(player.clientId, unusedPlayerTeams[player.clientId]);
+            delete unusedPlayerTeams[player.clientId];
+        }
+
+        $('#' + player.clientId).fadeIn('slow');
         subpub.emit('chatAlert', {
             msg: player.name + ' connected',
             cssClass: 'notice'
         });
 
-        if (globals.clientId === player.id) {
+        if (globals.clientId === player.clientId) {
             enableSelectBoxes();
         }
     });
 
     var playerLeave = subpub.on('server/playerLeave', function(player) {
-        $('#' + player.id).fadeOut('slow');
+        $('#' + player.clientId).fadeOut('slow');
         subpub.emit('chatAlert', {
             msg: player.name + ' disconnected',
             cssClass: 'error'
         });
     });
 
+    function updatePlayerColor(clientId, team) {
+        $('#' + clientId + ' .selected').css('backgroundColor', team);
+    }
+
+    function updatePlayerTeam(clientId, team) {
+        if (document.getElementById(clientId)) {
+            updatePlayerColor(clientId, team);
+        } else {
+            unusedPlayerTeams[clientId] = team;
+        }
+    }
+
     var updateTeam = subpub.on('server/updateTeam', function(player) {
-        $('#' + player.id + ' .selected').css('backgroundColor', player.team);
+        updatePlayerTeam(player.clientId, player.team);
     });
 
     var currentTeams = subpub.on('server/currentTeams', function(teams) {
         for (var i = 0; i < teams.red.length; i++) {
-             $('#' + teams.red[i] + ' .selected').css('backgroundColor', 'red');
+            updatePlayerTeam(teams.red[i], 'red');
         }
         for (i = 0; i < teams.blue.length; i++) {
-            $('#' + teams.blue[i] + ' .selected').css('backgroundColor', 'blue');
+            updatePlayerTeam(teams.blue[i], 'blue');
         }
         for (i = 0; i < teams.green.length; i++) {
-            $('#' + teams.green[i] + ' .selected').css('backgroundColor', 'green');
+            updatePlayerTeam(teams.green[i], 'green');
         }
     });
 
-    var startGame = subpub.on('server/startGame', function(teams) {
+    var startGame = subpub.on('server/finalTeams', function(teams) {
         console.log('start game');
         //unsubscribe to playerJoin event
         subpub.off(playerJoin);
@@ -131,7 +152,7 @@ function players() {
         $('#' + globals.clientId)[0].appendChild(createTeamBox());
         //set final team colors
         for (var i = 0; i < teams.red.length; i++) {
-             $('#' + teams.red[i] + ' .selected').css('backgroundColor', 'red');
+            $('#' + teams.red[i] + ' .selected').css('backgroundColor', 'red');
         }
         for (i = 0; i < teams.blue.length; i++) {
             $('#' + teams.blue[i] + ' .selected').css('backgroundColor', 'blue');
@@ -139,6 +160,10 @@ function players() {
         for (i = 0; i < teams.green.length; i++) {
             $('#' + teams.green[i] + ' .selected').css('backgroundColor', 'green');
         }
+    });
+
+    subpub.on('server/lobbyScreen', function() {
+        $('#playersPanel ul').empty();
     });
 
 }

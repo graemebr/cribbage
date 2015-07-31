@@ -8,7 +8,10 @@ function chat() {
 
         subpub.emit('toServer', {
             event: 'chat',
-            data: msg
+            data: {
+                author: globals.clientName,
+                text: msg
+            }
         });
 
         $('#chatPanel input')[0].value = '';
@@ -59,6 +62,12 @@ function chat() {
     $('#chatPanel button').click(function(event) {
         handleChatSubmit($('#chatPanel input')[0].value);
         event.preventDefault();
+    });
+
+    subpub.on('server/lobbyScreen', function() {
+        while(chatWindow.firstChild) {
+            chatWindow.removeChild(chatWindow.firstChild);
+        }
     });
 }
 

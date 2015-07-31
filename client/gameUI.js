@@ -14,15 +14,31 @@ function startButton() {
         });
     });
 
-    subpub.on('server/startGame', function() {
+    subpub.on('server/finalTeams', function() {
         $('#startButton').hide();
+    });
+
+    subpub.on('server/gameSetupScreen', function() {
+        //show main game screens
+        $('#gamePanel').show();
+        $('#sidePanel').show();
     });
 }
 
-subpub.on('loginScreenSubmitted', function() {
-    //show main game screens
-    $('#gamePanel').show();
-    $('#sidePanel').show();
-});
+function leaveButton() {
+    $('#leaveButton').click(function(event) {
+        subpub.emit('toServer', {
+            event: 'leaveGame'
+        });
+        $('#gamePanel').hide();
+        $('#sidePanel').hide();
+    });
+
+    subpub.on('server/finalTeams', function() {
+        $('#leaveButton').hide();
+    });
+}
+
 
 subpub.on('onload', startButton);
+subpub.on('onload', leaveButton);
