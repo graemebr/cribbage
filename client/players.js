@@ -77,6 +77,10 @@ function players() {
     };
 
     var playerJoin = subpub.on('server/playerJoin', function(player) {
+        // if($('#' + player.clientId)[0]) {
+        //     $('#' + player.clientId).remove();
+        // }    //TODO: Fix bug where old 'li' element is used for rejoining of player? Is it even a bug? Hmm
+
         var playerName = document.createElement('li');
         playerName.appendChild(document.createTextNode(player.name));
         playerName.style.display = 'none';

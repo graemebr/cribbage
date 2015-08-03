@@ -1,32 +1,36 @@
-// var clients = require('./clients');
+function Chat(section) {
+    this.history = [];
+    this.section = section;
 
-module.exports = function(section) {
-    var chatHistory = [];
+    this.section.on('client/chat', this.onChat.bind(this));
+    this.section.on('game/playerJoin', this.onPlayerJoin.bind(this));
+}
 
-    var addToHistory = function(msg) {
-        chatHistory.push(msg);
-        chatHistory = chatHistory.slice(-100);
-    };
-
-    section.on('client/chat', function(clientId, chatMessage) {
-        //send chat to clients and add to history
-        console.log(chatMessage.author + " : " + chatMessage.text);
-
-        addToHistory(chatMessage);
-
-        section.emit('allClients', {
-            event: 'chatMessage',
-            data: chatMessage
+Chat.prototype.onPlayerJoin = function(clientId) {
+    //send history to new client
+    if (this.history.length > 0) {
+        this.section.emit(clientId, {
+            event: 'chatHistory',
+            data: this.history
         });
-    });
+    }
+};
 
-    section.on('game/playerJoin', function(clientId) {
-        //send chatHistory to new client
-        if (chatHistory.length > 0) {
-            section.emit(clientId, {
-                event: 'chatHistory',
-                data: chatHistory
-            });
-        }
+Chat.prototype.onChat = function(clientId, message) {
+    //send chat to clients and add to history
+    console.log(message.author + " : " + message.text);
+
+    this.addToHistory(message);
+
+    this.section.emit('allClients', {
+        event: 'chatMessage',
+        data: message
     });
 };
+
+Chat.prototype.addToHistory = function(message) {
+    this.history.push(message);
+    this.history = this.history.slice(-100);
+};
+
+module.exports = Chat;

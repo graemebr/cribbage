@@ -22,9 +22,6 @@ function lobby() {
                 event: 'joinGame',
                 data: game.gameId
             });
-
-            $('#lobbyPanel').hide();
-            $('#lobbyPanel ul').empty();
         });
 
         $('#' + game.gameId).fadeIn('slow');
@@ -60,6 +57,11 @@ function lobby() {
     $('#lobbyPanel button').click(function(event) {
         handleNewGameSubmit($('#lobbyPanel input')[0].value);
         event.preventDefault();
+    });
+
+    subpub.on('server/gameSetupScreen', function() {
+        $('#lobbyPanel').hide();
+        $('#lobbyPanel ul').empty();
     });
 }
 subpub.on('onload', lobby);

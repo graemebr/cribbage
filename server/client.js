@@ -1,100 +1,93 @@
-module.exports = function(connection, section, clientId) {
+//creates unique clientIds
+var genclientId = 0;
+
+function Client(connection, section) {
+    this.connection = connection;
     this.section = section;
-    this.name = "";
-    this.clientId = clientId;
+    this.clientId = 'p' + (++genclientId);
+    this.name = ""
+    this.boundOnMessage = this.onMessage.bind(this);
+    this.boundOnClientMessage = this.onClientMessage.bind(this);
 
-    var self = this;
+    this.connection.on('message', this.boundOnMessage);
+    this.connection.once('close', this.onClose.bind(this));
+    this.addSectionListeners();
 
-    function onClientMessage(obj) {
-        connection.sendUTF(JSON.stringify(obj));
-    }
-
-    function onMessage(message) {
-        if (message.type === 'utf8') {
-            var json;
-            try {
-                json = JSON.parse(message.utf8Data);
-            } catch (e) {
-                console.log("invalid JSON: ", message.utf8Data);
-                return;
-            }
-            // console.log('emit: client/' + json.event);
-            self.section.emit('client/' + json.event, clientId, json.data);
-        }
-    }
-    connection.on('message', onMessage);
-
-    function onClose(con) {
-        //user connection closed
-        console.log("Client " + connection.remoteAddress + " disconnected");
-        connection.removeListener('message', onMessage);
-        removeListeners();
-        self.section.emit('client/clientClose', clientId);
-    }
-    connection.once('close', onClose);
-
-    function onLogin(clientId, name) {
-        if (clientId === self.clientId) {
-            self.name = name;
-        }
-    }
-
-    function onPlayerJoin(clientId) {
-        if(clientId !== self.clientId) {
-            self.section.emit(clientId, {
-                event: 'playerJoin',
-                data: {
-                    name: self.name,
-                    clientId: self.clientId
-                }
-            });
-        } else {
-            self.section.emit('allClients', {
-                event: 'playerJoin',
-                data: {
-                    name: self.name,
-                    clientId: self.clientId
-                }
-            });
-        }
-    }
-
-    function onPlayerLeave(clientId, name) {
-        self.section.emit(self.clientId, {
-            event: 'playerLeave',
-            data: {
-                clientId: clientId,
-                name: name
-            }
-        });
-    }
-
-    function removeListeners() {
-        self.section.removeListener(clientId, onClientMessage);
-        self.section.removeListener('allClients', onClientMessage);
-        self.section.removeListener('game/playerJoin', onPlayerJoin);
-        self.section.removeListener('client/login', onLogin);
-        self.section.removeListener('game/playerLeave', onPlayerLeave);
-    }
-
-    function addListeners() {
-        self.section.on(clientId, onClientMessage);
-        self.section.on('allClients', onClientMessage);
-        self.section.on('game/playerJoin', onPlayerJoin);
-        self.section.on('client/login', onLogin);
-        self.section.on('game/playerLeave', onPlayerLeave);
-    }
-
-    this.setSection = function(section) {
-        removeListeners();
-        self.section = section;
-        addListeners();
-    };
-
-    this.setSection(section);
-
-    this.section.emit(clientId, {
+    this.section.emit(this.clientId, {
         event: 'clientId',
-        data: clientId
+        data: this.clientId
     });
+}
+
+Client.prototype.onClientMessage = function(obj) {
+    this.connection.sendUTF(JSON.stringify(obj));
 };
+
+Client.prototype.onMessage = function(message) {
+    if (message.type === 'utf8') {
+        var json;
+        try {
+            json = JSON.parse(message.utf8Data);
+        } catch (e) {
+            console.log("invalid JSON: ", message.utf8Data);
+            return;
+        }
+        this.section.emit('client/' + json.event, clientId, json.data);
+    }
+};
+
+Client.prototype.onClose = function(connection) {
+    //user connection closed
+    console.log("Client " + this.connection.remoteAddress + " disconnected");
+    this.connection.removeListener('message', this.boundOnMessage);
+    this.removeSectionListeners();
+    this.section.emit('client/clientClose', this.clientId);
+};
+
+Client.prototype.addSectionListeners = function() {
+    this.section.on(this.clientId, this.boundOnClientMessage);
+    this.section.on('allClients', this.boundOnClientMessage);
+};
+
+Client.prototype.removeSectionListeners = function() {
+    this.section.removeListener(this.clientId, this.boundOnClientMessage);
+    this.section.removeListener('allClients', this.boundOnClientMessage);
+};
+
+Client.prototype.setSection = function(section) {
+    this.removeSectionListeners();
+    this.section = section;
+    this.addSectionListeners();
+};
+
+module.exports = Client;
+
+// function onPlayerJoin(clientId) {
+//     if(clientId !== self.clientId) {
+//         self.section.emit(clientId, {
+//             event: 'playerJoin',
+//             data: {
+//                 name: self.name,
+//                 clientId: self.clientId
+//             }
+//         });
+//     } else {
+//         self.section.emit('allClients', {
+//             event: 'playerJoin',
+//             data: {
+//                 name: self.name,
+//                 clientId: self.clientId
+//             }
+//         });
+//     }
+// }
+
+// function onPlayerLeave(clientId, name) {
+//     self.section.emit(self.clientId, {
+//         event: 'playerLeave',
+//         data: {
+//             clientId: clientId,
+//             name: name
+//         }
+//     });
+// }

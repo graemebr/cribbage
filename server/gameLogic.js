@@ -1,25 +1,13 @@
-var teams = require('./teams');
 var Deck = require('./deck');
-var deck = new Deck();
+var Player = require('./player');
 
-// module.exports = (function() {
+module.exports = function(section) {
 
-var startGame = function() {
+    var deck = new Deck();
 
+
+    var startGame = function() {
+
+    };
+    section.on('teams/startGame', startGame);
 };
-
-// var passToCrib = function() {
-//     teams.forEachPlayer(function(clientId) {
-//         subpub.emit('toClient', clientId, {
-//             event: 'newHand',
-//             data: deck.dealHand()
-//         });
-//     });
-// };
-
-subpub.on('teams/startGame', startGame);
-// subpub.on('countingDone', passToCrib);
-
-
-//     return {};
-// })();

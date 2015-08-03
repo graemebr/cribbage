@@ -89,8 +89,6 @@ module.exports = function(section) {
         section.removeListener('game/playerJoin', playerJoinCallback);
         section.removeListener('game/playerLeave', playerLeaveCallback);
         section.removeListener('client/startGame', startGameCallback);
-
-        //TODO: add new callback for playerLeave events
     };
 
     var setTeamCallback = function(clientId, team) {
@@ -192,16 +190,18 @@ module.exports = function(section) {
             //cement teams to disallow changes
             cementTeams();
             //tell clients game has started and final teams
-            section.emit('allClients', {
-                event: 'finalTeams',
-                data: {
+            //
+            var finalTeams = {
                     red: red,
                     blue: blue,
                     green: green
-                }
+            };
+            section.emit('allClients', {
+                event: 'finalTeams',
+                data: finalTeams
             });
             //tell rest of server that game is started
-            section.emit('teams/startGame');
+            section.emit('teams/startGame', finalTeams);
         }
     };
     section.on('client/startGame', startGameCallback);

@@ -62,15 +62,15 @@ Deck.prototype.shuffle = function() {
 };
 
 Deck.prototype.dealHand = function(numCards) {
-    var handCards = [];
-    for (var i = 0; i < numCards; i++) {
-        handCards.push(this.cards.pop());
-    }
-    return (new Hand(handCards));
+    return (new Hand(this.cards.splice(0,numCards)));
 };
 
-Deck.prototype.addCards = function(newCards) {
-    Array.prototype.push.apply(this.cards, newCards);
+Deck.prototype.getNumCards = function() {
+    return this.cards.length;
+};
+
+Deck.prototype.cutDeck = function(index) {
+    return this.cards.splice(index, 1)[0];
 };
 
 var Card = function(data) {

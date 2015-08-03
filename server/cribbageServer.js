@@ -7,9 +7,8 @@ var WebSocketServer = require('websocket').server;
 var http = require('http');
 
 var subpub = require('./subpub');
-var games = require('./games');
-
-
+var Lobby = require('./lobby');
+var lobby = new Lobby();
 
 //optionally run server with a port specified on the command line
 //(port 1337 is hardcoded into client code currently)
