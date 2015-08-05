@@ -1,9 +1,7 @@
 //sets up the window with player names and team setting abilities
 function players() {
     //setup DOM stuff
-    //
-    //
-    var unusedPlayerTeams = {};
+
 
     var createSelectOption = function(htmlClass) {
         var selectOption = document.createElement('span');
@@ -30,7 +28,9 @@ function players() {
     };
 
     var enableSelectBoxes = function() {
+        console.log('enabling selectboxes');
         $('.selectBox').each(function() {
+            console.log('each thingy');
             //clicking on select box opens / closes it!
             $(this).children('.selected').click(function() {
                 if ($(this).parent().children('.selectOptions').css('display') == 'none') {
@@ -76,11 +76,7 @@ function players() {
         return teamBox;
     };
 
-    var playerJoin = subpub.on('server/playerJoin', function(player) {
-        // if($('#' + player.clientId)[0]) {
-        //     $('#' + player.clientId).remove();
-        // }    //TODO: Fix bug where old 'li' element is used for rejoining of player? Is it even a bug? Hmm
-
+    function createPlayer(player) {
         var playerName = document.createElement('li');
         playerName.appendChild(document.createTextNode(player.name));
         playerName.style.display = 'none';
@@ -95,21 +91,28 @@ function players() {
 
         $('#playersPanel ul').append(playerName);
 
-        if(unusedPlayerTeams[player.clientId]) {
-            updatePlayerColor(player.clientId, unusedPlayerTeams[player.clientId]);
-            delete unusedPlayerTeams[player.clientId];
-        }
+        updatePlayerTeam(player);
 
         $('#' + player.clientId).fadeIn('slow');
-        subpub.emit('chatAlert', {
-            msg: player.name + ' connected',
-            cssClass: 'notice'
-        });
 
         if (globals.clientId === player.clientId) {
             enableSelectBoxes();
         }
-    });
+    }
+
+    function onPlayerJoin(player) {
+        // if($('#' + player.clientId)[0]) {
+        //     $('#' + player.clientId).remove();
+        // }    //TODO: Fix bug where old 'li' element is used for rejoining of player? Is it even a bug? Hmm
+
+        createPlayer(player);
+
+        subpub.emit('chatAlert', {
+            msg: player.name + ' connected',
+            cssClass: 'notice'
+        });
+    }
+    var playerJoin = subpub.on('server/playerJoin', onPlayerJoin);
 
     var playerLeave = subpub.on('server/playerLeave', function(player) {
         $('#' + player.clientId).fadeOut('slow');
@@ -119,31 +122,33 @@ function players() {
         });
     });
 
-    function updatePlayerColor(clientId, team) {
-        $('#' + clientId + ' .selected').css('backgroundColor', team);
+    function updatePlayerTeam(player) {
+        $('#' + player.clientId + ' .selected').css('backgroundColor', player.team);
     }
 
-    function updatePlayerTeam(clientId, team) {
-        if (document.getElementById(clientId)) {
-            updatePlayerColor(clientId, team);
-        } else {
-            unusedPlayerTeams[clientId] = team;
-        }
-    }
-
-    var updateTeam = subpub.on('server/updateTeam', function(player) {
-        updatePlayerTeam(player.clientId, player.team);
-    });
+    var updateTeam = subpub.on('server/updateTeam', updatePlayerTeam);
 
     var currentTeams = subpub.on('server/currentTeams', function(teams) {
         for (var i = 0; i < teams.red.length; i++) {
-            updatePlayerTeam(teams.red[i], 'red');
+            createPlayer({
+                clientId: teams.red[i].clientId,
+                team: 'red',
+                name: teams.red[i].name
+            });
         }
         for (i = 0; i < teams.blue.length; i++) {
-            updatePlayerTeam(teams.blue[i], 'blue');
+            createPlayer({
+                clientId: teams.blue[i].clientId,
+                team: 'blue',
+                name: teams.blue[i].name
+            });
         }
         for (i = 0; i < teams.green.length; i++) {
-            updatePlayerTeam(teams.green[i], 'green');
+            createPlayer({
+                clientId: teams.green[i].clientId,
+                team: 'green',
+                name: teams.green[i].name
+            });
         }
     });
 
@@ -156,13 +161,22 @@ function players() {
         $('#' + globals.clientId)[0].appendChild(createTeamBox());
         //set final team colors
         for (var i = 0; i < teams.red.length; i++) {
-            $('#' + teams.red[i] + ' .selected').css('backgroundColor', 'red');
+            updatePlayerTeam({
+                clientId: teams.red[i].clientId,
+                team: 'red'
+            });
         }
         for (i = 0; i < teams.blue.length; i++) {
-            $('#' + teams.blue[i] + ' .selected').css('backgroundColor', 'blue');
+            updatePlayerTeam({
+                clientId: teams.blue[i].clientId,
+                team: 'blue'
+            });
         }
         for (i = 0; i < teams.green.length; i++) {
-            $('#' + teams.green[i] + ' .selected').css('backgroundColor', 'green');
+            updatePlayerTeam({
+                clientId: teams.green[i].clientId,
+                team: 'green'
+            });
         }
     });
 

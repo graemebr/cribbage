@@ -1,5 +1,4 @@
 var Deck = require('./deck');
-var Player = require('./player');
 
 module.exports = function(section) {
 

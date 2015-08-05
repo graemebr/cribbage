@@ -5,7 +5,7 @@ function Client(connection, section) {
     this.connection = connection;
     this.section = section;
     this.clientId = 'p' + (++genclientId);
-    this.name = ""
+    this.name = "";
     this.boundOnMessage = this.onMessage.bind(this);
     this.boundOnClientMessage = this.onClientMessage.bind(this);
 
@@ -32,7 +32,7 @@ Client.prototype.onMessage = function(message) {
             console.log("invalid JSON: ", message.utf8Data);
             return;
         }
-        this.section.emit('client/' + json.event, clientId, json.data);
+        this.section.emit('client/' + json.event, this.clientId, json.data);
     }
 };
 
@@ -45,13 +45,17 @@ Client.prototype.onClose = function(connection) {
 };
 
 Client.prototype.addSectionListeners = function() {
-    this.section.on(this.clientId, this.boundOnClientMessage);
-    this.section.on('allClients', this.boundOnClientMessage);
+    if (this.section) {
+        this.section.on(this.clientId, this.boundOnClientMessage);
+        this.section.on('allClients', this.boundOnClientMessage);
+    }
 };
 
 Client.prototype.removeSectionListeners = function() {
-    this.section.removeListener(this.clientId, this.boundOnClientMessage);
-    this.section.removeListener('allClients', this.boundOnClientMessage);
+    if (this.section) {
+        this.section.removeListener(this.clientId, this.boundOnClientMessage);
+        this.section.removeListener('allClients', this.boundOnClientMessage);
+    }
 };
 
 Client.prototype.setSection = function(section) {
@@ -61,33 +65,3 @@ Client.prototype.setSection = function(section) {
 };
 
 module.exports = Client;
-
-// function onPlayerJoin(clientId) {
-//     if(clientId !== self.clientId) {
-//         self.section.emit(clientId, {
-//             event: 'playerJoin',
-//             data: {
-//                 name: self.name,
-//                 clientId: self.clientId
-//             }
-//         });
-//     } else {
-//         self.section.emit('allClients', {
-//             event: 'playerJoin',
-//             data: {
-//                 name: self.name,
-//                 clientId: self.clientId
-//             }
-//         });
-//     }
-// }
-
-// function onPlayerLeave(clientId, name) {
-//     self.section.emit(self.clientId, {
-//         event: 'playerLeave',
-//         data: {
-//             clientId: clientId,
-//             name: name
-//         }
-//     });
-// }

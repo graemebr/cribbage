@@ -26,7 +26,8 @@ function Game(name) {
     this.boundOnClientClose = this.onClientClose.bind(this);
     this.on('client/leaveGame', this.onLeaveGame.bind(this));
     this.on('client/clientClose', this.boundOnClientClose);
-    this.on('teams/startGame', this.onStartGame.bind(this));
+    this.on('client/startGame', this.onStartGame.bind(this));
+    this.on('teams/validTeams', this.onValidTeams.bind(this));
 }
 util.inherits(Game, EventEmitter);
 
@@ -45,6 +46,7 @@ Game.prototype.onJoinGame = function(gameId, client) {
 };
 
 Game.prototype.onLeaveGame = function(clientId) {
+    this.clients[clientId].setSection(null); //stop client from receiving game events for this game
     subpub.emit('game/joinLobby', this.clients[clientId]);
     this.removeClientFromGame(clientId);
 };
@@ -69,10 +71,17 @@ Game.prototype.onClientQuit = function(clientId) {
 };
 
 Game.prototype.onStartGame = function() {
+    subpub.emit('game/validateTeams');
+};
+
+Game.prototype.onValidTeams = function() {
     subpub.removeListener('lobby/joinGame', this.boundOnJoinGame);
     this.removeListener('client/clientClose', this.boundOnClientClose);
     this.on('client/clientClose', this.onClientQuit.bind(this));
+
     subpub.emit('game/gameStarted', this.gameId);
+
+    this.emit('game/startGame');
 };
 
 module.exports = Game;

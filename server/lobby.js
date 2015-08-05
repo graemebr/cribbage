@@ -99,3 +99,5 @@ Lobby.prototype.onGameEmpty = function(gameId) {
     this.games[gameId] = null;
     this.onGameStarted(gameId);
 };
+
+module.exports = Lobby;
