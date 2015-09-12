@@ -62,7 +62,7 @@ Deck.prototype.shuffle = function() {
 };
 
 Deck.prototype.dealHand = function(numCards) {
-    return (new Hand(this.cards.splice(0,numCards)));
+    return this.cards.splice(0,numCards);
 };
 
 Deck.prototype.getNumCards = function() {
@@ -92,11 +92,6 @@ Card.prototype.sameSuit = function(card) {
 
 Card.prototype.sameNumber = function(card) {
     return this.number === card.number;
-};
-
-var Hand = function(cards) {
-    //creates hand objects
-    this.cards = cards;
 };
 
 module.exports = Deck;

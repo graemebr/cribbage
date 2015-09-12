@@ -18,7 +18,7 @@ function Game(name) {
 
     this.chat = new Chat(this);
     this.teams = new Teams(this);
-    this.gameLogic = new GameLogic(this);
+    // this.gameLogic = new GameLogic(this, this.teams);
 
     this.boundOnJoinGame = this.onJoinGame.bind(this);
     subpub.on('lobby/joinGame', this.boundOnJoinGame);
@@ -71,17 +71,27 @@ Game.prototype.onClientQuit = function(clientId) {
 };
 
 Game.prototype.onStartGame = function() {
-    subpub.emit('game/validateTeams');
+    if(this.teams.validTeams()) {
+        subpub.removeListener('lobby/joinGame', this.boundOnJoinGame);
+        this.removeListener('client/clientClose', this.boundOnClientClose);
+        this.on('client/clientClose', this.onClientQuit.bind(this));
+
+        subpub.emit('game/gameStarted', this.gameId);
+
+        this.gameLogic = new GameLogic(this, this.teams.getTeams());
+
+        this.emit('game/startGame');
+    }
 };
 
-Game.prototype.onValidTeams = function() {
-    subpub.removeListener('lobby/joinGame', this.boundOnJoinGame);
-    this.removeListener('client/clientClose', this.boundOnClientClose);
-    this.on('client/clientClose', this.onClientQuit.bind(this));
+// Game.prototype.onValidTeams = function() {
+//     subpub.removeListener('lobby/joinGame', this.boundOnJoinGame);
+//     this.removeListener('client/clientClose', this.boundOnClientClose);
+//     this.on('client/clientClose', this.onClientQuit.bind(this));
 
-    subpub.emit('game/gameStarted', this.gameId);
+//     subpub.emit('game/gameStarted', this.gameId);
 
-    this.emit('game/startGame');
-};
+//     this.emit('game/startGame');
+// };
 
 module.exports = Game;

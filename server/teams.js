@@ -1,3 +1,5 @@
+var Team = requre('./team');
+
 function Teams(section) {
     this.section = section;
 
@@ -10,13 +12,13 @@ function Teams(section) {
     this.boundOnSetTeam = this.onSetTeam.bind(this);
     this.boundOnPlayerJoin = this.onPlayerJoin.bind(this);
     this.boundOnPlayerLeave = this.onPlayerLeave.bind(this);
-    this.boundOnValidateTeams = this.onValidateTeams.bind(this);
+    // this.boundOnValidateTeams = this.onValidateTeams.bind(this);
     this.boundOnStartGame = this.onStartGame.bind(this);
 
     this.section.on('client/setTeam', this.boundOnSetTeam);
     this.section.on('game/playerJoin', this.boundOnPlayerJoin);
     this.section.on('game/playerLeave', this.boundOnPlayerLeave);
-    this.section.on('game/validateTeams', this.boundOnValidateTeams);
+    // this.section.on('game/validateTeams', this.boundOnValidateTeams);
     this.section.on('game/startGame', this.boundOnStartGame);
 }
 
@@ -89,6 +91,11 @@ Teams.prototype.cementTeams = function() {
     this.section.removeListener('client/setTeam', this.boundOnSetTeam);
     this.section.removeListener('game/playerJoin', this.boundOnPlayerJoin);
     this.section.removeListener('game/playerLeave', this.boundOnPlayerLeave);
+    for (var i = 0; i < this.teams.length; i++) {
+        if(this.teams[i].getNumPlayers() === 0) {
+            this.teams.splice(i,1);
+        }
+    }
 };
 
 Teams.prototype.getCurrentTeams = function() {
@@ -179,12 +186,12 @@ Teams.prototype.onPlayerLeave = function(clientId) {
     this.emitValidTeams();
 };
 
-Teams.prototype.onValidateTeams = function() {
-    if (this.validTeams()) {
-        console.log('valid teams');
-        this.section.emit('teams/validTeams');
-    }
-};
+// Teams.prototype.onValidateTeams = function() {
+//     if (this.validTeams()) {
+//         console.log('valid teams');
+//         this.section.emit('teams/validTeams');
+//     }
+// };
 
 Teams.prototype.onStartGame = function() {
     //cement teams to disallow changes
@@ -196,51 +203,60 @@ Teams.prototype.onStartGame = function() {
     });
 };
 
-
-
-
-
-
-function Team(teamId) {
-    this.teamId = teamId;
-    this.players = [];
-}
-
-Team.prototype.add = function(player) {
-    this.players.push(player);
-};
-
-Team.prototype.popPlayer = function(clientId) {
-    for (var i = this.players.length - 1; i >= 0; i--) {
-        if(this.players[i].clientId === clientId) {
-            return this.players.splice(i, 1)[0];
-        }
-    }
-};
-
-Team.prototype.getPlayerList = function() {
-    var playerList = [];
-    this.players.forEach(function(player) {
-        playerList.push({
-            clientId: player.clientId,
-            name: player.name
-        });
-    });
-    return playerList;
-};
-
-Team.prototype.getNumPlayers = function() {
-    return this.players.length;
+Teams.prototype.getTeams = function() {
+    return this.teams;
 };
 
 
+// Teams.prototype.nexRound = function() {
+//     //set CribPlayer
+//     this.cribIndex = (this.cribIndex+1)%this.teams.length;
+//     this.teams[this.cribIndex].incrementCribPLayer();
+//     this.teams[(this.cribIndex+1)%this.teams.length].incrementFirstPlayer();
+//     this.teams.forEach(function(team) {
+//         team.nextRound();
+//     });
+// };
+
+// Teams.prototype.getCribPlayer = function() {
+//     return this.teams[this.cribIndex].getCribPlayer();
+// };
+
+// Teams.prototype.getFirstPlayer = function() {
+//     return this.teams[(this.cribIndex+1)%this.teams.length].getFirstPlayer();
+// };
+
+// Teams.prototype.getNextPlayer = function() {
+//     return this.teams[this.lastIndex++].getNextPlayer();
+// };
+
+// Teams.prototype.setLastPlayer = function(player) {
+//     this.teams.some(function(team, index) {
+//         if(team.setLastPlayer(player)) {
+//             this.lastIndex = index;
+//             return true;
+//         }
+//         return false;
+//     });
+// };
 
 
+// Teams.prototype.forEachPlayer = function(func, ctx, args) {
+//     //forEachPlayer(func, ctx [, args])
+//     this.teams.forEach(function(team) {
+//         team.forEach(func, ctx, args);
+//     });
+// };
 
-
-function Player(clientId, name) {
-    this.clientId = clientId;
-    this.name = name;
-}
+// Teams.prototype.forEachTeam = function(func, ctx, args) {
+//     //forEachTeam(func, ctx [, args])
+//     this.teams.forEach(function(team) {
+//         var funcArgs = [team];
+//         if (args) {
+//             funcArgs = funcArgs.concat(args);
+//         }
+//         func.apply(ctx, funcArgs);
+//     });
+// };
 
 module.exports = Teams;
