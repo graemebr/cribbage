@@ -1,4 +1,4 @@
-var Player = requre('./player');
+var Player = require('./player');
 
 function Team(teamId) {
     this.teamId = teamId;

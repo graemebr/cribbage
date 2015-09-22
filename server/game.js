@@ -27,7 +27,7 @@ function Game(name) {
     this.on('client/leaveGame', this.onLeaveGame.bind(this));
     this.on('client/clientClose', this.boundOnClientClose);
     this.on('client/startGame', this.onStartGame.bind(this));
-    this.on('teams/validTeams', this.onValidTeams.bind(this));
+    // this.on('teams/validTeams', this.onValidTeams.bind(this));
 }
 util.inherits(Game, EventEmitter);
 

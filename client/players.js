@@ -30,7 +30,6 @@ function players() {
     var enableSelectBoxes = function() {
         console.log('enabling selectboxes');
         $('.selectBox').each(function() {
-            console.log('each thingy');
             //clicking on select box opens / closes it!
             $(this).children('.selected').click(function() {
                 if ($(this).parent().children('.selectOptions').css('display') == 'none') {
@@ -160,23 +159,30 @@ function players() {
         $('#' + globals.clientId + ' .selectBox').remove();
         $('#' + globals.clientId)[0].appendChild(createTeamBox());
         //set final team colors
-        for (var i = 0; i < teams.red.length; i++) {
-            updatePlayerTeam({
-                clientId: teams.red[i].clientId,
-                team: 'red'
-            });
+        var i;
+        if(teams.red) {
+            for (i = 0; i < teams.red.length; i++) {
+                updatePlayerTeam({
+                    clientId: teams.red[i].clientId,
+                    team: 'red'
+                });
+            }
         }
-        for (i = 0; i < teams.blue.length; i++) {
-            updatePlayerTeam({
-                clientId: teams.blue[i].clientId,
-                team: 'blue'
-            });
+        if(teams.blue) {
+            for (i = 0; i < teams.blue.length; i++) {
+                updatePlayerTeam({
+                    clientId: teams.blue[i].clientId,
+                    team: 'blue'
+                });
+            }
         }
-        for (i = 0; i < teams.green.length; i++) {
-            updatePlayerTeam({
-                clientId: teams.green[i].clientId,
-                team: 'green'
-            });
+        if(teams.green) {
+            for (i = 0; i < teams.green.length; i++) {
+                updatePlayerTeam({
+                    clientId: teams.green[i].clientId,
+                    team: 'green'
+                });
+            }
         }
     });
 

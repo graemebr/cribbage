@@ -1,5 +1,5 @@
-var Team = requre('./team');
-
+var Team = require('./team');
+var Player = require('./player');
 function Teams(section) {
     this.section = section;
 
@@ -91,11 +91,6 @@ Teams.prototype.cementTeams = function() {
     this.section.removeListener('client/setTeam', this.boundOnSetTeam);
     this.section.removeListener('game/playerJoin', this.boundOnPlayerJoin);
     this.section.removeListener('game/playerLeave', this.boundOnPlayerLeave);
-    for (var i = 0; i < this.teams.length; i++) {
-        if(this.teams[i].getNumPlayers() === 0) {
-            this.teams.splice(i,1);
-        }
-    }
 };
 
 Teams.prototype.getCurrentTeams = function() {
@@ -145,7 +140,7 @@ Teams.prototype.onPlayerJoin = function(clientId, clientName) {
     });
 
     //add player
-    var player = new Player(clientId, clientName);
+    var player = new Player(clientId, clientName, this.section);
     var teamId;
     if (this.numPlayers === 3) {
         teamId = this.addPlayerToTeamN(player, 1);

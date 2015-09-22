@@ -81,9 +81,10 @@ button {
 
 #gameCanvas {
     background-color: #00FFFF;
-    height: 100%;
+/*    height: 100%;
     width: 100%;
-    vertical-align: middle
+    vertical-align: middle*/
+    display:block;
 }
 
 #connecting {
