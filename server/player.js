@@ -8,20 +8,22 @@ function Player(clientId, name, section) {
     this.section = section;
 }
 
-Player.prototype.passToCrib = function(hand) {
+Player.prototype.passToCrib = function(hand, cribPlayer, cribCards) {
     this.section.on('client/donePassToCrib', this.onDonePassToCrib.bind(this));
     this.hand = hand;
     this.crib = null;
     this.section.emit(this.clientId, {
         event: 'passToCrib',
-        data: this.hand
+        data: {
+            hand: this.hand,
+            cribPlayer: cribPlayer.name
+        }
     });
-};
-
-Player.prototype.makeCribPlayer = function(cribCards) {
-    this.crib = [];
-    if(cribCards.length === 1) {
-        this.crib.push(cribCards[0]);
+    if(this === cribPlayer) {
+        this.crib = [];
+        if(cribCards.length === 1) {
+            this.crib.push(cribCards[0]);
+        }
     }
 };
 

@@ -84,16 +84,15 @@ GameLogic.prototype.passToCrib = function() {
     if(this.roundPlayers.length === 2) {
         numCards = 6;
     }
-
-    this.roundPlayers.forEach((function(player) {
-        //send players their hands
-        player.passToCrib(this.deck.dealHand(numCards));
-    }).bind(this));
     var dealCardsToCrib = 0;
     if(this.roundPlayers.length === 3) {
         dealCardsToCrib = 1;
     }
-    this.roundPlayers[this.cribIndex].makeCribPlayer(this.deck.dealHand(dealCardsToCrib));
+    var deltCribCards = this.deck.dealHand(dealCardsToCrib);
+    this.roundPlayers.forEach((function(player) {
+        //send players their hands
+        player.passToCrib(this.deck.dealHand(numCards), this.roundPlayers[this.cribIndex], deltCribCards);
+    }).bind(this));
 
 };
 

@@ -1,6 +1,8 @@
 function gameCanvas() {
     var cardImages = {};
     var backImage;
+    var deckImage;
+    var deckCardImage;
     var canvas = document.getElementById('gameCanvas');
     var context = document.getElementById('gameCanvas').getContext('2d');
     var gamePanel = $('#gamePanel');
@@ -22,6 +24,8 @@ function gameCanvas() {
     subpub.on('server/loadAssets', function(cards) {
         var count = cards.length;
         count++; //back image
+        count++; //deck image
+        count++; //deck card image
         cards.forEach(function(card) {
             var img = new Image();
             img.src = 'playingCards/' + card.number + '_of_' + card.suit + '.png';
@@ -45,15 +49,36 @@ function gameCanvas() {
                 });
             }
         };
+        deckImage = new Image();
+        deckImage.src = 'playingCards/deck.png';
+        deckImage.onload = function() {
+            if (--count === 0) {
+                console.log('assetsLoaded');
+                subpub.emit('toServer', {
+                    event: 'assetsLoaded',
+                });
+            }
+        };
+        deckCardImage = new Image();
+        deckCardImage.src = 'playingCards/deck_card.png';
+        deckCardImage.onload = function() {
+            if (--count === 0) {
+                console.log('assetsLoaded');
+                subpub.emit('toServer', {
+                    event: 'assetsLoaded',
+                });
+            }
+        };
     });
 
-    subpub.on('server/passToCrib', function(hand) {
-        var passCount = (hand.length === 5) ? 1 : 2;
+    subpub.on('server/passToCrib', function(data) {
+        var passCount = (data.hand.length === 5) ? 1 : 2;
         var passCards = [];
         console.log('passToCrib');
+        console.log('crib player: ' + data.cribPlayer);
         var x = 0;
         var y = canvas.height - 150;
-        hand.forEach(function(card) {
+        data.hand.forEach(function(card) {
             var sprite = new Sprite(cardImages[card.id], context);
             x += 110;
             sprite.x = x;
@@ -63,12 +88,12 @@ function gameCanvas() {
                 if (passCards.length < passCount) {
                     passCards.push(card);
                     sprite.y -= 20;
+                    removeSpriteFromHand(sprite);
                     if (passCards.length === passCount) {
                         subpub.emit('toServer', {
                             event: 'donePassToCrib',
                             data: passCards
                         });
-                        removeSpriteFromHand(sprite);
                     }
                 }
             };
@@ -91,7 +116,7 @@ function gameCanvas() {
 
     subpub.on('server/cribCards', function(numCards) {
         console.log('addToCrib');
-        var x = 110*7;
+        var x = 110 * 7;
         var y = canvas.height - 150;
         for (var i = 0; i < numCards; i++) {
             var sprite = new Sprite(backImage, context);
@@ -112,12 +137,37 @@ function gameCanvas() {
     });
 
     subpub.on('server/cutDeck', function(numCards) {
-        //TODO make actual cut deck picker
         console.log('choosing cutCard');
-        subpub.emit('toServer', {
-            event: 'doneCutDeck',
-            data: Math.floor(Math.random() * numCards)
-        });
+        var cardSprite = new Sprite(deckCardImage, context);
+        var deckSprite = new Sprite(deckImage, context);
+        deckSprite.scale = 0.2;
+        deckSprite.x = canvas.width / 2 - deckSprite.w * deckSprite.scale / 2;
+        deckSprite.y = canvas.height / 2 - deckSprite.h * deckSprite.scale / 2;
+        cardSprite.scale = 0.2;
+        cardSprite.x = canvas.width / 2 + deckSprite.w * deckSprite.scale / 4;
+        cardSprite.y = canvas.height / 2;
+
+        function mouseMoveCutDeck(event) {
+            var y = event.pageY - canvas.offsetTop;
+            cardSprite.y = (canvas.height / 2 - deckSprite.h * deckSprite.scale / 2) + (deckSprite.h * deckSprite.scale * 0.25 *y/canvas.height);
+        }
+
+        function mouseClickCutDeck(event) {
+            canvas.removeEventListener('mouseClick', mouseMoveCutDeck);
+            canvas.removeEventListener('click', mouseClickCutDeck);
+
+            deckSprite.unsubscribe();
+            cardSprite.unsubscribe();
+
+            var y = event.pageY - canvas.offsetTop;
+            subpub.emit('toServer', {
+                event: 'doneCutDeck',
+                data: Math.floor(y/canvas.height * numCards)
+            });
+        }
+
+        canvas.addEventListener('mousemove', mouseMoveCutDeck);
+        canvas.addEventListener('click', mouseClickCutDeck);
     });
 
     function loop(time) {
