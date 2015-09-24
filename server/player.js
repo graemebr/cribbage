@@ -68,10 +68,12 @@ Player.prototype.onDonePassToCrib = function(clientId, passedCards) {
 };
 
 Player.prototype.cutDeck = function(deck) {
-    this.section.emit(this.clientId, {
+    this.section.emit('allClients', {
         event: 'cutDeck',
         data: {
-            deckSize: deck.getNumCards()
+            deckSize: deck.getNumCards(),
+            clientId: this.clientId,
+            name: this.name
         }
     });
     this.section.once('client/doneCutDeck', (function(clientId, index) {
@@ -98,6 +100,9 @@ Player.prototype.cutPoints = function(points) {
 
 Player.prototype.newPeggingRound = function() {
     this.go = false;
+    this.section.emit(this.clientId,{
+        event: 'newPeggingRound'
+    });
 };
 
 Player.prototype.peg = function(cardCount, callback) {
@@ -116,13 +121,21 @@ Player.prototype.peg = function(cardCount, callback) {
             this.unpeggedCards = this.unpeggedCards.filter(function(obj) {
                 return !(obj.same(card));
             });
+            this.section.emit('allClients', {
+                event: 'cardPegged',
+                data: card
+            });
             callback(new Card(card));
         }
         this.section.once('client/pegDone', pegDone.bind(this));
 
-        this.section.emit(this.clientId, {
+        this.section.emit('allClients', {
             event: 'peg',
-            data: allowedCards
+            data: {
+                allowedCards: allowedCards,
+                clientId: this.clientId,
+                name: this.name
+            }
         });
     } else {
         if (!this.go) {

@@ -10,6 +10,8 @@ function gameCanvas() {
     canvas.height = gamePanel.height();
     var spriteHand = [];
     var spriteCrib = [];
+    var spritePeg = [];
+    var turnText = '';
 
     canvas.addEventListener('click', function(event) {
         var x = event.pageX - canvas.offsetLeft;
@@ -39,6 +41,9 @@ function gameCanvas() {
                 }
             };
         });
+        turnText = new Text(context);
+        turnText.x = canvas.width / 2;
+        turnText.y = 50;
         backImage = new Image();
         backImage.src = 'playingCards/back.png';
         backImage.onload = function() {
@@ -78,6 +83,9 @@ function gameCanvas() {
         console.log('crib player: ' + data.cribPlayer);
         var x = 0;
         var y = canvas.height - 150;
+
+        turnText.text = "Pass card(s) to crib. " + data.cribPlayer + "'s crib!";
+
         data.hand.forEach(function(card) {
             var sprite = new Sprite(cardImages[card.id], context);
             x += 110;
@@ -104,25 +112,43 @@ function gameCanvas() {
         });
     });
 
-    subpub.on('server/peg', function(allowedCards) {
-        console.log('peg');
-        var chosen = false;
-        spriteHand.forEach(function(obj) {
-            obj.sprite.onClick = function() {
-                if (allowedCards.some(function(card) {
-                        return card.id === obj.card.id;
-                    })) {
-                    if (!chosen) {
-                        chosen = true;
-                        subpub.emit('toServer', {
-                            event: 'pegDone',
-                            data: obj.card
-                        });
-                        removeSpriteFromHand(obj.sprite);
-                    }
-                }
-            };
+    subpub.on('server/cardPegged', function(card) {
+        var sprite = new Sprite(cardImages[card.id], context);
+        spritePeg.push(sprite);
+        sprite.x = 60 + spritePeg.length * 50;
+        sprite.y = 50;
+        sprite.scale = 0.2;
+    });
+
+    subpub.on('server/newPeggingRound', function() {
+        spritePeg.forEach(function(sprite) {
+            sprite.unsubscribe();
         });
+        spritePeg = [];
+    });
+
+    subpub.on('server/peg', function(data) {
+        if (data.clientId === globals.clientId) {
+            console.log('peg');
+            var chosen = false;
+            spriteHand.forEach(function(obj) {
+                obj.sprite.onClick = function() {
+                    if (data.allowedCards.some(function(card) {
+                            return card.id === obj.card.id;
+                        })) {
+                        if (!chosen) {
+                            chosen = true;
+                            subpub.emit('toServer', {
+                                event: 'pegDone',
+                                data: obj.card
+                            });
+                            removeSpriteFromHand(obj.sprite);
+                        }
+                    }
+                };
+            });
+        }
+        turnText.text = data.name + ' is pegging!';
     });
 
     function removeSpriteFromHand(sprite) {
@@ -160,38 +186,41 @@ function gameCanvas() {
         sprite.scale = 0.2;
     });
 
-    subpub.on('server/cutDeck', function(numCards) {
-        console.log('choosing cutCard');
-        var cardSprite = new Sprite(deckCardImage, context);
-        var deckSprite = new Sprite(deckImage, context);
-        deckSprite.scale = 0.2;
-        deckSprite.x = canvas.width / 2 - deckSprite.w * deckSprite.scale / 2;
-        deckSprite.y = canvas.height / 2 - deckSprite.h * deckSprite.scale / 2;
-        cardSprite.scale = 0.2;
-        cardSprite.x = canvas.width / 2 + deckSprite.w * deckSprite.scale / 4;
-        cardSprite.y = canvas.height / 2;
+    subpub.on('server/cutDeck', function(data) {
+        turnText.text = data.name + ' is cutting the deck!';
+        if (data.clientId === globals.clientId) {
+            console.log('choosing cutCard');
+            var cardSprite = new Sprite(deckCardImage, context);
+            var deckSprite = new Sprite(deckImage, context);
+            deckSprite.scale = 0.2;
+            deckSprite.x = canvas.width / 2 - deckSprite.w * deckSprite.scale / 2;
+            deckSprite.y = canvas.height / 2 - deckSprite.h * deckSprite.scale / 2;
+            cardSprite.scale = 0.2;
+            cardSprite.x = canvas.width / 2 + deckSprite.w * deckSprite.scale / 4;
+            cardSprite.y = canvas.height / 2;
 
-        function mouseMoveCutDeck(event) {
-            var y = event.pageY - canvas.offsetTop;
-            cardSprite.y = (canvas.height / 2 - deckSprite.h * deckSprite.scale / 2) + (deckSprite.h * deckSprite.scale * 0.25 * y / canvas.height);
+            function mouseMoveCutDeck(event) {
+                var y = event.pageY - canvas.offsetTop;
+                cardSprite.y = (canvas.height / 2 - deckSprite.h * deckSprite.scale / 2) + (deckSprite.h * deckSprite.scale * 0.25 * y / canvas.height);
+            }
+
+            function mouseClickCutDeck(event) {
+                canvas.removeEventListener('mouseClick', mouseMoveCutDeck);
+                canvas.removeEventListener('click', mouseClickCutDeck);
+
+                deckSprite.unsubscribe();
+                cardSprite.unsubscribe();
+
+                var y = event.pageY - canvas.offsetTop;
+                subpub.emit('toServer', {
+                    event: 'doneCutDeck',
+                    data: Math.floor(y / canvas.height * data.numCards)
+                });
+            }
+
+            canvas.addEventListener('mousemove', mouseMoveCutDeck);
+            canvas.addEventListener('click', mouseClickCutDeck);
         }
-
-        function mouseClickCutDeck(event) {
-            canvas.removeEventListener('mouseClick', mouseMoveCutDeck);
-            canvas.removeEventListener('click', mouseClickCutDeck);
-
-            deckSprite.unsubscribe();
-            cardSprite.unsubscribe();
-
-            var y = event.pageY - canvas.offsetTop;
-            subpub.emit('toServer', {
-                event: 'doneCutDeck',
-                data: Math.floor(y / canvas.height * numCards)
-            });
-        }
-
-        canvas.addEventListener('mousemove', mouseMoveCutDeck);
-        canvas.addEventListener('click', mouseClickCutDeck);
     });
 
     function loop(time) {
