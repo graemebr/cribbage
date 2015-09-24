@@ -155,7 +155,7 @@ GameLogic.prototype.pegAction = function() {
 
 GameLogic.prototype.getPegPoints = function() {
     //TODO: calculate points for top card in cardList
-    return {};
+    return 0;
 };
 
 GameLogic.prototype.counting = function() {

@@ -124,14 +124,16 @@ Player.prototype.peg = function(cardCount, callback) {
             event: 'peg',
             data: allowedCards
         });
-    } else if (!this.go) {
-        this.go = true;
-        console.log('player/player go, ' + this.name);
-        this.section.emit('player/go');
-        if (this.unpeggedCards.length === 0 && !this.donePegging) {
-            this.donePegging = true;
-            console.log('player/player donePegging, ' + this.name);
-            this.section.emit('player/donePegging');
+    } else {
+        if (!this.go) {
+            this.go = true;
+            console.log('player/player go, ' + this.name);
+            this.section.emit('player/go');
+            if (this.unpeggedCards.length === 0 && !this.donePegging) {
+                this.donePegging = true;
+                console.log('player/player donePegging, ' + this.name);
+                this.section.emit('player/donePegging');
+            }
         }
         this.section.emit('player/finishedPegAction');
     }
@@ -143,7 +145,7 @@ Player.prototype.pegPoints = function(points) {
 };
 
 Player.prototype.goPoints = function(points) {
-    console.log('go points: '+ points);
+    console.log('go points: ' + points);
     this.cutPoints(points);
 };
 
