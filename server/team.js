@@ -32,6 +32,12 @@ Team.prototype.getNumPlayers = function() {
     return this.players.length;
 };
 
+Team.prototype.setPlayerTeam = function() {
+    this.players.forEach((function(player) {
+        player.team = this.teamId;
+    }).bind(this));
+};
+
 // Team.prototype.forEach = function(func, ctx, args) {
 //     this.players.forEach(function(player) {
 //         var funcArgs = [player];

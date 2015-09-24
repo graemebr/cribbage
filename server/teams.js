@@ -91,6 +91,11 @@ Teams.prototype.cementTeams = function() {
     this.section.removeListener('client/setTeam', this.boundOnSetTeam);
     this.section.removeListener('game/playerJoin', this.boundOnPlayerJoin);
     this.section.removeListener('game/playerLeave', this.boundOnPlayerLeave);
+
+    //tell the players' what their teams are
+    this.teams.forEach(function(team) {
+        team.setPlayerTeam();
+    });
 };
 
 Teams.prototype.getCurrentTeams = function() {

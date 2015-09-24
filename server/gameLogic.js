@@ -6,8 +6,8 @@ function GameLogic(section, teamsList) {
     this.roundPlayers = [];
 
     for (var k = 0; k < teamsList.length; k++) {
-        if(teamsList[k].getNumPlayers() === 0) {
-            teamsList.splice(k,1);
+        if (teamsList[k].getNumPlayers() === 0) {
+            teamsList.splice(k, 1);
         }
     }
     for (var i = 0, length = teamsList[0].getNumPlayers(); i < length; i++) {
@@ -58,7 +58,7 @@ GameLogic.prototype.getCribPlayer = function() {
 
 GameLogic.prototype.getFirstPlayer = function() {
     var firstIndex = this.nextIndex(this.cribIndex);
-    return  this.roundPlayers[firstIndex];
+    return this.roundPlayers[firstIndex];
 };
 
 GameLogic.prototype.getNextPlayer = function() {
@@ -68,7 +68,7 @@ GameLogic.prototype.getNextPlayer = function() {
 };
 
 GameLogic.prototype.getGoPlayer = function() {
-    return  this.roundPlayers[this.goIndex];
+    return this.roundPlayers[this.goIndex];
 };
 
 
@@ -81,11 +81,11 @@ GameLogic.prototype.passToCrib = function() {
     this.lastIndex = this.cribIndex;
 
     var numCards = 5;
-    if(this.roundPlayers.length === 2) {
+    if (this.roundPlayers.length === 2) {
         numCards = 6;
     }
     var dealCardsToCrib = 0;
-    if(this.roundPlayers.length === 3) {
+    if (this.roundPlayers.length === 3) {
         dealCardsToCrib = 1;
     }
     var deltCribCards = this.deck.dealHand(dealCardsToCrib);
@@ -104,10 +104,12 @@ GameLogic.prototype.cutDeck = function() {
 GameLogic.prototype.onCutCard = function(card) {
     this.cutCard = card;
 
-    //TODO: calculate point options
-    var pointOptions = {};
+    var points = 0;
+    if (card.number === 'jack') {
+        points += 2;
+    }
 
-    this.getCribPlayer().cutPoints(pointOptions);
+    this.getCribPlayer().cutPoints(points);
 };
 
 GameLogic.prototype.pegging = function() {
@@ -118,6 +120,7 @@ GameLogic.prototype.pegging = function() {
 };
 
 GameLogic.prototype.onDonePegging = function() {
+    console.log('donePegging');
     this.section.removeListener('player/finishedPegAction', this.boundPegAction);
     this.counting();
 };
@@ -125,9 +128,14 @@ GameLogic.prototype.onDonePegging = function() {
 GameLogic.prototype.setupPeggingRound = function() {
     this.count = 0;
     this.cardList = [];
+    this.roundPlayers.forEach(function(player) {
+        //send players their hands
+        player.newPeggingRound();
+    });
 };
 
 GameLogic.prototype.onGo = function() {
+    console.log('go, player ' + this.getGoPlayer().name);
     this.getGoPlayer().goPoints(1);
     this.lastIndex = this.goIndex;
     this.setupPeggingRound();
@@ -135,8 +143,9 @@ GameLogic.prototype.onGo = function() {
 
 GameLogic.prototype.pegAction = function() {
     var player = this.getNextPlayer();
+    console.log('peg action, player ' + player.name);
     player.peg(this.count, (function(card) {
-        console.log('card pegged: ' + this.card.id);
+        console.log('card pegged, player: ' + player.name);
         this.count += card.value;
         this.cardList.push(card);
         this.goIndex = this.lastIndex;
@@ -150,6 +159,7 @@ GameLogic.prototype.getPegPoints = function() {
 };
 
 GameLogic.prototype.counting = function() {
+    console.log('counting');
     this.lastIndex = this.cribIndex;
     this.section.on('player/doneCounting', this.boundCountNextPlayer);
     this.countNextPlayer();

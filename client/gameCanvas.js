@@ -97,19 +97,43 @@ function gameCanvas() {
                     }
                 }
             };
-            spriteHand.push(sprite);
+            spriteHand.push({
+                sprite: sprite,
+                card: card
+            });
+        });
+    });
+
+    subpub.on('server/peg', function(allowedCards) {
+        console.log('peg');
+        var chosen = false;
+        spriteHand.forEach(function(obj) {
+            obj.sprite.onClick = function() {
+                if (allowedCards.some(function(card) {
+                        return card.id === obj.card.id;
+                    })) {
+                    if (!chosen) {
+                        chosen = true;
+                        subpub.emit('toServer', {
+                            event: 'pegDone',
+                            data: obj.card
+                        });
+                        removeSpriteFromHand(obj.sprite);
+                    }
+                }
+            };
         });
     });
 
     function removeSpriteFromHand(sprite) {
         spriteHand = spriteHand.filter(function(obj) {
-            return obj !== sprite;
+            return obj.sprite !== sprite;
         });
 
         var x = 0;
         spriteHand.forEach(function(obj) {
             x += 110;
-            obj.x = x;
+            obj.sprite.x = x;
         });
         sprite.unsubscribe();
     }
@@ -149,7 +173,7 @@ function gameCanvas() {
 
         function mouseMoveCutDeck(event) {
             var y = event.pageY - canvas.offsetTop;
-            cardSprite.y = (canvas.height / 2 - deckSprite.h * deckSprite.scale / 2) + (deckSprite.h * deckSprite.scale * 0.25 *y/canvas.height);
+            cardSprite.y = (canvas.height / 2 - deckSprite.h * deckSprite.scale / 2) + (deckSprite.h * deckSprite.scale * 0.25 * y / canvas.height);
         }
 
         function mouseClickCutDeck(event) {
@@ -162,7 +186,7 @@ function gameCanvas() {
             var y = event.pageY - canvas.offsetTop;
             subpub.emit('toServer', {
                 event: 'doneCutDeck',
-                data: Math.floor(y/canvas.height * numCards)
+                data: Math.floor(y / canvas.height * numCards)
             });
         }
 
