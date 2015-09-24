@@ -116,7 +116,7 @@ function gameCanvas() {
 
     subpub.on('server/cribCards', function(numCards) {
         console.log('addToCrib');
-        var x = 110 * 7;
+        var x = canvas.width - 300;
         var y = canvas.height - 150;
         for (var i = 0; i < numCards; i++) {
             var sprite = new Sprite(backImage, context);
