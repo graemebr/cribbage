@@ -13,6 +13,7 @@ function cribBoard(teams) {
             place++;
         }
     }
+    var oldTeamPoints = JSON.parse(JSON.stringify(teamPoints));
 
     subpub.on('canvasUpdate', update);
 
@@ -23,8 +24,8 @@ function cribBoard(teams) {
     function draw() {
         context.fillStyle = 'SandyBrown';
 
-        var startX = (canvas.width-800)/2;
-        var startY = (canvas.height-200)/2;
+        var startX = (canvas.width - 800) / 2;
+        var startY = (canvas.height - 200) / 2;
 
         context.fillRect(startX, startY, 800, 200);
 
@@ -41,14 +42,24 @@ function cribBoard(teams) {
                 context.fillRect(startX + 10 + teamPoints[i].points * 780 / 121, startY + 50 + 50 * teamPoints[i].place, 5, 5);
             }
         }
+
+        for (i in oldTeamPoints) {
+            if (oldTeamPoints.hasOwnProperty(i)) {
+                context.fillStyle = i;
+                context.fillRect(startX + 10 + oldTeamPoints[i].points * 780 / 121, startY + 50 + 50 * oldTeamPoints[i].place, 5, 5);
+            }
+        }
     }
 
     subpub.on('server/addPoints', addPoints);
 
     function addPoints(data) {
-        teamPoints[data.team].points += data.points;
-        if (teamPoints[data.team].points > 121) {
-            teamPoints[data.team].points = 121;
+        if (data.points > 0) {
+            oldTeamPoints[data.team].points = teamPoints[data.team].points;
+            teamPoints[data.team].points += data.points;
+            if (teamPoints[data.team].points > 121) {
+                teamPoints[data.team].points = 121;
+            }
         }
     }
 }

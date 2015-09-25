@@ -21,8 +21,8 @@ function GameLogic(section, teamsList) {
     this.goIndex = 0;
 
     this.cutCard = null;
-    this.pegCount = 0;
-    this.pegCardList = [];
+    this.count = 0;
+    this.cardList = [];
 
     this.section.on('game/startGame', this.startGame.bind(this));
     this.waitForPlayersToSend('client/assetsLoaded', this.passToCrib.bind(this));
@@ -153,9 +153,115 @@ GameLogic.prototype.pegAction = function() {
     }).bind(this));
 };
 
+GameLogic.prototype.countPairsR = function(index, count) {
+    if (index >= 0 && this.cardList[index].sameNumber(this.cardList[index + 1])) {
+        return this.countPairsR(index - 1, count + 1);
+    }
+    return count;
+};
+
+GameLogic.prototype.countRunR = function(cardListIndex, indexDictionary, count) {
+    if (cardListIndex >= 0) {
+        //add new card to indexDictionary
+        indexDictionary[this.cardList[cardListIndex].number]++;
+
+        if (!this.runPairs(indexDictionary) && this.continuousRun(indexDictionary)) {
+            //no pairs and cards make up whole group
+            //current set of cards is longest run found so far
+            return this.countRunR(cardListIndex - 1, indexDictionary, this.cardList.length - cardListIndex);
+        }
+        return this.countRunR(cardListIndex - 1, indexDictionary, count);
+    }
+    return count;
+};
+
+GameLogic.prototype.runPairs = function(indexDictionary) {
+    for (var index in indexDictionary) {
+        if (indexDictionary.hasOwnProperty(index)) {
+            if (indexDictionary[index] > 1) {
+                return true;
+            }
+        }
+    }
+    return false;
+};
+
+GameLogic.prototype.continuousRun = function(indexDictionary) {
+    //for checking ordering
+    var numbers = ['ace', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'jack', 'queen', 'king'];
+    var runStarted = false;
+    var runFinished = false;
+    var contiuous = true;
+    numbers.forEach(function(number) {
+        if (indexDictionary[number] > 0) {
+            //card exists with this number
+            if (!runStarted) {
+                runStarted = true;
+            } else {
+                if (runFinished) {
+                    contiuous = false;
+                }
+            }
+        } else {
+            //card doesn't exist with this number
+            if (runStarted && !runFinished) {
+                runFinished = true;
+            }
+        }
+    });
+
+    return contiuous;
+};
+
 GameLogic.prototype.getPegPoints = function() {
-    //TODO: calculate points for top card in cardList
-    return 0;
+    console.log('getting peg points');
+    //calculate points for top card in cardList
+    var points = 0;
+
+    var numCardsSame = this.countPairsR(this.cardList.length - 2, 1);
+    switch (numCardsSame) {
+        case 2:
+            //pair
+            console.log('pair');
+            points += 2;
+            break;
+        case 3:
+            //triples
+            console.log('triple');
+            points += 6;
+            break;
+        case 4:
+            //four of a kind
+            console.log('four of a kind');
+            points += 12;
+            break;
+    }
+
+    //15
+    if (this.count === 15) {
+        console.log('15 for 2');
+        points += 2;
+    }
+
+    //31
+    if (this.count === 31) {
+        console.log('31 for 2');
+        points += 1; //(go point given separately)
+    }
+
+    //runs
+    var indexDictionary = {};
+    var numbers = ['ace', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'jack', 'queen', 'king'];
+    numbers.forEach(function(number) {
+        indexDictionary[number] = 0;
+    });
+    var longestRun = this.countRunR(this.cardList.length - 1, indexDictionary, 0);
+    console.log('longest run: ' + longestRun);
+    if (longestRun > 2) {
+        points += longestRun;
+    }
+
+    return points;
 };
 
 GameLogic.prototype.counting = function() {
