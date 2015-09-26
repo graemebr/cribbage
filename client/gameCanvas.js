@@ -11,6 +11,7 @@ function gameCanvas() {
     var spriteHand = [];
     var spriteCrib = [];
     var spritePeg = [];
+    var spriteCutCard;
     var turnText = '';
 
     canvas.addEventListener('click', function(event) {
@@ -85,6 +86,15 @@ function gameCanvas() {
         var y = canvas.height - 150;
 
         turnText.text = "Pass card(s) to crib. " + data.cribPlayer + "'s crib!";
+
+        spriteHand.forEach(function(card) {
+            card.sprite.unsubscribe();
+        });
+        spriteHand = [];
+        if (spriteCutCard) {
+            spriteCutCard.unsubscribe();
+            spriteCutCard = null;
+        }
 
         data.hand.forEach(function(card) {
             var sprite = new Sprite(cardImages[card.id], context);
@@ -180,10 +190,10 @@ function gameCanvas() {
     });
 
     subpub.on('server/cutCard', function(card) {
-        var sprite = new Sprite(cardImages[card.id], context);
-        sprite.y = 50;
-        sprite.x = canvas.width - 110;
-        sprite.scale = 0.2;
+        spriteCutCard = new Sprite(cardImages[card.id], context);
+        spriteCutCard.y = 50;
+        spriteCutCard.x = canvas.width - 110;
+        spriteCutCard.scale = 0.2;
     });
 
     subpub.on('server/cutDeck', function(data) {
@@ -221,6 +231,210 @@ function gameCanvas() {
             canvas.addEventListener('mousemove', mouseMoveCutDeck);
             canvas.addEventListener('click', mouseClickCutDeck);
         }
+    });
+
+    subpub.on('server/countHand', function(data) {
+        turnText.text = data.name + ' is counting their hand!';
+        spriteHand.forEach(function(card) {
+            card.sprite.unsubscribe();
+        });
+        spriteHand = [];
+        spritePeg.forEach(function(sprite) {
+            sprite.unsubscribe();
+        });
+        spritePeg = [];
+
+        if (data.clientId === globals.clientId) {
+            var selectedCards = [];
+            var x = 0;
+            var y = canvas.height - 150;
+            data.hand.forEach(function(card) {
+                var sprite = new Sprite(cardImages[card.id], context);
+                var selected = false;
+                x += 110;
+                sprite.x = x;
+                sprite.y = y;
+                sprite.scale = 0.2;
+                sprite.onClick = function() {
+                    if (!selected) {
+                        selectedCards.push(card);
+                        sprite.y -= 20;
+                        selected = true;
+                    } else {
+                        selectedCards = selectedCards.filter(function(card2) {
+                            return card.id !== card2.id;
+                        });
+                        sprite.y += 20;
+                        selected = false;
+                    }
+                };
+                spriteHand.push({
+                    sprite: sprite,
+                    card: card
+                });
+            });
+            var cutCardSelected = false;
+            spriteCutCard.onClick = function() {
+                if (!cutCardSelected) {
+                    selectedCards.push(data.cutCard);
+                    spriteCutCard.y -= 20;
+                    cutCardSelected = true;
+                } else {
+                    selectedCards = selectedCards.filter(function(card2) {
+                        return data.cutCard.id !== card2.id;
+                    });
+                    spriteCutCard.y += 20;
+                    cutCardSelected = false;
+                }
+            };
+
+            //temp!!!!!
+            var plus = new Image();
+            plus.src = 'playingCards/plus.png';
+            plus.onload = function() {
+                var sprite = new Sprite(plus, context);
+                sprite.x = canvas.width / 2;
+                sprite.y = canvas.height / 2;
+                sprite.scale = 0.1;
+                sprite.onClick = function() {
+                    subpub.emit('toServer', {
+                        event: 'countCards',
+                        data: selectedCards
+                    });
+                };
+            };
+            var check = new Image();
+            check.src = 'playingCards/check.png';
+            check.onload = function() {
+                var sprite2 = new Sprite(check, context);
+                sprite2.x = canvas.width / 2;
+                sprite2.y = canvas.height * 3 / 4;
+                sprite2.scale = 0.1;
+                sprite2.onClick = function() {
+                    subpub.emit('toServer', {
+                        event: 'doneCountingCards'
+                    });
+                };
+            };
+        } else {
+            var a = 0;
+            data.hand.forEach(function(card) {
+                var sprite = new Sprite(cardImages[card.id], context);
+                a += 110;
+                sprite.x = a;
+                sprite.y = canvas.height - 150;
+                sprite.scale = 0.2;
+                spriteHand.push({
+                    sprite: sprite,
+                    card: card
+                });
+            });
+        }
+
+    });
+
+    subpub.on('server/countCrib', function(data) {
+        turnText.text = data.name + ' is counting their crib!';
+        spriteHand.forEach(function(card) {
+            card.sprite.unsubscribe();
+        });
+        spriteHand = [];
+        spritePeg.forEach(function(sprite) {
+            sprite.unsubscribe();
+        });
+        spritePeg = [];
+        spriteCrib.forEach(function(sprite) {
+            sprite.unsubscribe();
+        });
+        spriteCrib = [];
+
+        if (data.clientId === globals.clientId) {
+            var selectedCards = [];
+            var x = 0;
+            var y = canvas.height - 150;
+            data.hand.forEach(function(card) {
+                var sprite = new Sprite(cardImages[card.id], context);
+                var selected = false;
+                x += 110;
+                sprite.x = x;
+                sprite.y = y;
+                sprite.scale = 0.2;
+                sprite.onClick = function() {
+                    if (!selected) {
+                        selectedCards.push(card);
+                        sprite.y -= 20;
+                        selected = true;
+                    } else {
+                        selectedCards = selectedCards.filter(function(card2) {
+                            return card.id !== card2.id;
+                        });
+                        sprite.y += 20;
+                        selected = false;
+                    }
+                };
+                spriteHand.push({
+                    sprite: sprite,
+                    card: card
+                });
+            });
+            var cutCardSelected = false;
+            spriteCutCard.onClick = function() {
+                if (!cutCardSelected) {
+                    selectedCards.push(data.cutCard);
+                    spriteCutCard.y -= 20;
+                    cutCardSelected = true;
+                } else {
+                    selectedCards = selectedCards.filter(function(card2) {
+                        return data.cutCard.id !== card2.id;
+                    });
+                    spriteCutCard.y += 20;
+                    cutCardSelected = false;
+                }
+            };
+
+            //temp!!!!!
+            var plus = new Image();
+            plus.src = 'playingCards/plus.png';
+            plus.onload = function() {
+                var sprite = new Sprite(plus, context);
+                sprite.x = canvas.width / 2;
+                sprite.y = canvas.height / 2;
+                sprite.scale = 0.1;
+                sprite.onClick = function() {
+                    subpub.emit('toServer', {
+                        event: 'countCards',
+                        data: selectedCards
+                    });
+                };
+            };
+            var check = new Image();
+            check.src = 'playingCards/check.png';
+            check.onload = function() {
+                var sprite2 = new Sprite(check, context);
+                sprite2.x = canvas.width / 2;
+                sprite2.y = canvas.height * 3 / 4;
+                sprite2.scale = 0.1;
+                sprite2.onClick = function() {
+                    subpub.emit('toServer', {
+                        event: 'doneCountingCards'
+                    });
+                };
+            };
+        } else {
+            var a = 0;
+            data.hand.forEach(function(card) {
+                var sprite = new Sprite(cardImages[card.id], context);
+                a += 110;
+                sprite.x = a;
+                sprite.y = canvas.height - 150;
+                sprite.scale = 0.2;
+                spriteHand.push({
+                    sprite: sprite,
+                    card: card
+                });
+            });
+        }
+
     });
 
     function loop(time) {

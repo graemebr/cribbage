@@ -267,7 +267,7 @@ GameLogic.prototype.getPegPoints = function() {
 GameLogic.prototype.counting = function() {
     console.log('counting');
     this.lastIndex = this.cribIndex;
-    this.section.on('player/doneCounting', this.boundCountNextPlayer);
+    this.section.on('player/doneCounting2', this.boundCountNextPlayer);
     this.countNextPlayer();
 };
 
@@ -277,7 +277,7 @@ GameLogic.prototype.countNextPlayer = function() {
 };
 
 GameLogic.prototype.cribCounting = function() {
-    this.section.removeListener('player/doneCounting', this.boundCountNextPlayer);
+    this.section.removeListener('player/doneCounting2', this.boundCountNextPlayer);
     this.getCribPlayer().countCrib(this.cutCard);
 };
 

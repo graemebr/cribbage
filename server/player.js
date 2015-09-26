@@ -18,6 +18,7 @@ Player.prototype.passToCrib = function(hand, cribPlayer, cribCards) {
     this.hand = hand;
     this.unpeggedCards = hand;
     this.donePegging = false;
+    this.go = false;
     this.crib = null;
     this.section.emit(this.clientId, {
         event: 'passToCrib',
@@ -100,7 +101,7 @@ Player.prototype.cutPoints = function(points) {
 
 Player.prototype.newPeggingRound = function() {
     this.go = false;
-    this.section.emit(this.clientId,{
+    this.section.emit(this.clientId, {
         event: 'newPeggingRound'
     });
 };
@@ -163,11 +164,278 @@ Player.prototype.goPoints = function(points) {
 };
 
 Player.prototype.countHand = function(cutCard) {
-    //TODO
+    var pointsAccumulated = 0;
+
+    function run(cards) {
+        //check if run
+        //for checking ordering
+        var numbers = ['ace', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'jack', 'queen', 'king'];
+
+        //create indexDictionary of cards
+        var indexDictionary = {};
+        cards.forEach(function(card) {
+            indexDictionary[card.number] = 1;
+        });
+
+        var runStarted = false;
+        var isRun = false;
+        var count = 0;
+        numbers.some(function(number) {
+            if (indexDictionary[number] === 1) {
+                //one card exists with this number
+                count++;
+                if (!runStarted) {
+                    runStarted = true;
+                }
+                if (count === cards.length) {
+                    //all cards in set have been passed
+                    isRun = true;
+                    return true; // break
+                }
+            } else if (indexDictionary[number > 1]) {
+                return true; //break because not a run
+            } else {
+                //card doesn't exist with this number
+                if (runStarted) {
+                    return true; // break because we've reached the end of our possible run
+                }
+            }
+            return false;
+        });
+
+        return isRun;
+    }
+
+    function countCards(clientId, cards) {
+        //two cards
+        if (cards.length === 2) {
+            //pairs, 15, jack's nib
+            if (cards[0].number === cards[1].number) {
+                pointsAccumulated += 2;
+            }
+            if ((cards[0].value + cards[1].value) === 15) {
+                pointsAccumulated += 2;
+            }
+            if (cutCard.same(cards[0]) && cards[1].number === 'jack' && cards[0].suit === cards[1].suit) {
+                pointsAccumulated += 1;
+            }
+            if (cutCard.same(cards[1]) && cards[0].number === 'jack' && cards[0].suit === cards[1].suit) {
+                pointsAccumulated += 1;
+            }
+        }
+
+        //three cards
+        if (cards.length === 3) {
+            //15
+            //run
+            //triple\
+            //            var triple;
+            if (cards[0].number === cards[1].number && cards[0].number === cards[2].number) {
+                pointsAccumulated += 6;
+            }
+            if ((cards[0].value + cards[1].value + cards[2].value) === 15) {
+                pointsAccumulated += 2;
+            }
+            if (run(cards)) {
+                pointsAccumulated += 3;
+            }
+        }
+
+
+        //four cards
+        if (cards.length === 4) {
+            //flush (no cutCard)
+            //15
+            //run 4
+            //quadruple
+            if (cards[0].number === cards[1].number && cards[0].number === cards[2].number && cards[0].number === cards[3].number) {
+                pointsAccumulated += 12;
+            }
+            if ((cards[0].value + cards[1].value + cards[2].value + cards[3].value) === 15) {
+                pointsAccumulated += 2;
+            }
+            if (run(cards)) {
+                pointsAccumulated += 4;
+            }
+            var includesCutCard = cards.some(function(card) {
+                return cutCard.same(card);
+            });
+            if (!includesCutCard && cards[0].suit === cards[1].suit && cards[0].suit === cards[2].suit && cards[0].suit === cards[3].suit) {
+                pointsAccumulated += 4;
+            }
+        }
+
+        //five cards
+        if (cards.length === 5) {
+            //flush
+            //15
+            //run 5
+            if ((cards[0].value + cards[1].value + cards[2].value + cards[3].value + cards[4].value) === 15) {
+                pointsAccumulated += 2;
+            }
+            if (run(cards)) {
+                pointsAccumulated += 5;
+            }
+            if (cards[0].suit === cards[1].suit && cards[0].suit === cards[2].suit && cards[0].suit === cards[3].suit && cards[0].suit === cards[4].suit) {
+                pointsAccumulated += 5;
+            }
+        }
+        console.log('pointsAccumulated: ' + pointsAccumulated);
+    }
+    this.section.on('client/countCards', countCards);
+    this.section.once('client/doneCountingCards', (function(clientId) {
+        this.section.removeListener('client/countCards', countCards);
+        this.cutPoints(pointsAccumulated);
+        this.section.emit('player/doneCounting');
+        this.section.emit('player/doneCounting2');
+    }).bind(this));
+    console.log('COUNT HAAAAAAAAAND');
+    this.section.emit('allClients', {
+        event: 'countHand',
+        data: {
+            hand: this.hand,
+            cutCard: cutCard,
+            name: this.name,
+            clientId: this.clientId
+        }
+    });
 };
 
 Player.prototype.countCrib = function(cutCard) {
-    //TODO
+    var pointsAccumulated = 0;
+
+    function run(cards) {
+        //check if run
+        //for checking ordering
+        var numbers = ['ace', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'jack', 'queen', 'king'];
+
+        //create indexDictionary of cards
+        var indexDictionary = {};
+        cards.forEach(function(card) {
+            indexDictionary[card.number] = 1;
+        });
+
+        var runStarted = false;
+        var isRun = false;
+        var count = 0;
+        numbers.some(function(number) {
+            if (indexDictionary[number] === 1) {
+                //one card exists with this number
+                count++;
+                if (!runStarted) {
+                    runStarted = true;
+                }
+                if (count === cards.length) {
+                    //all cards in set have been passed
+                    isRun = true;
+                    return true; // break
+                }
+            } else if (indexDictionary[number > 1]) {
+                return true; //break because not a run
+            } else {
+                //card doesn't exist with this number
+                if (runStarted) {
+                    return true; // break because we've reached the end of our possible run
+                }
+            }
+            return false;
+        });
+
+        return isRun;
+    }
+
+    function countCards(clientId, cards) {
+        //two cards
+        if (cards.length === 2) {
+            //pairs, 15, jack's nib
+            if (cards[0].number === cards[1].number) {
+                pointsAccumulated += 2;
+            }
+            if ((cards[0].value + cards[1].value) === 15) {
+                pointsAccumulated += 2;
+            }
+            if (cutCard.same(cards[0]) && cards[1].number === 'jack' && cards[0].suit === cards[1].suit) {
+                pointsAccumulated += 1;
+            }
+            if (cutCard.same(cards[1]) && cards[0].number === 'jack' && cards[0].suit === cards[1].suit) {
+                pointsAccumulated += 1;
+            }
+        }
+
+        //three cards
+        if (cards.length === 3) {
+            //15
+            //run
+            //triple\
+            //            var triple;
+            if (cards[0].number === cards[1].number && cards[0].number === cards[2].number) {
+                pointsAccumulated += 6;
+            }
+            if ((cards[0].value + cards[1].value + cards[2].value) === 15) {
+                pointsAccumulated += 2;
+            }
+            if (run(cards)) {
+                pointsAccumulated += 3;
+            }
+        }
+
+
+        //four cards
+        if (cards.length === 4) {
+            //flush (no cutCard)
+            //15
+            //run 4
+            //quadruple
+            if (cards[0].number === cards[1].number && cards[0].number === cards[2].number && cards[0].number === cards[3].number) {
+                pointsAccumulated += 12;
+            }
+            if ((cards[0].value + cards[1].value + cards[2].value + cards[3].value) === 15) {
+                pointsAccumulated += 2;
+            }
+            if (run(cards)) {
+                pointsAccumulated += 4;
+            }
+            var includesCutCard = cards.some(function(card) {
+                return cutCard.same(card);
+            });
+            if (!includesCutCard && cards[0].suit === cards[1].suit && cards[0].suit === cards[2].suit && cards[0].suit === cards[3].suit) {
+                pointsAccumulated += 4;
+            }
+        }
+
+        //five cards
+        if (cards.length === 5) {
+            //flush
+            //15
+            //run 5
+            if ((cards[0].value + cards[1].value + cards[2].value + cards[3].value + cards[4].value) === 15) {
+                pointsAccumulated += 2;
+            }
+            if (run(cards)) {
+                pointsAccumulated += 5;
+            }
+            if (cards[0].suit === cards[1].suit && cards[0].suit === cards[2].suit && cards[0].suit === cards[3].suit && cards[0].suit === cards[4].suit) {
+                pointsAccumulated += 5;
+            }
+        }
+        console.log('pointsAccumulated: ' + pointsAccumulated);
+    }
+    this.section.on('client/countCards', countCards);
+    this.section.once('client/doneCountingCards', (function(clientId) {
+        this.section.removeListener('client/countCards', countCards);
+        this.cutPoints(pointsAccumulated);
+        this.section.emit('player/doneCribCounting');
+    }).bind(this));
+    console.log('COUNT CRIBBBBBBBB');
+    this.section.emit('allClients', {
+        event: 'countCrib',
+        data: {
+            hand: this.crib,
+            cutCard: cutCard,
+            name: this.name,
+            clientId: this.clientId
+        }
+    });
 };
 
 module.exports = Player;
