@@ -97,6 +97,12 @@ Player.prototype.cutPoints = function(points) {
         }
     });
     this.points += points;
+    if (this.points > 120) {
+        this.section.emit('player/gameOver');
+        this.section.emit('allClients', {
+            event: 'gameOver'
+        });
+    }
 };
 
 Player.prototype.newPeggingRound = function() {
@@ -124,7 +130,10 @@ Player.prototype.peg = function(cardCount, callback) {
             });
             this.section.emit('allClients', {
                 event: 'cardPegged',
-                data: card
+                data: {
+                    card: card,
+                    cardCount: card.value + cardCount
+                }
             });
             callback(new Card(card));
         }
@@ -165,6 +174,19 @@ Player.prototype.goPoints = function(points) {
 
 Player.prototype.countHand = function(cutCard) {
     var pointsAccumulated = 0;
+    this.section.emit('allClients', {
+        event: 'pointsAccumulated',
+        data: pointsAccumulated
+    });
+
+    function clearCardCount() {
+        pointsAccumulated = 0;
+        this.section.emit('allClients', {
+            event: 'pointsAccumulated',
+            data: pointsAccumulated
+        });
+    }
+    var boundClearCardCount = clearCardCount.bind(this);
 
     function run(cards) {
         //check if run
@@ -281,15 +303,21 @@ Player.prototype.countHand = function(cutCard) {
             }
         }
         console.log('pointsAccumulated: ' + pointsAccumulated);
+        this.section.emit('allClients', {
+            event: 'pointsAccumulated',
+            data: pointsAccumulated
+        });
     }
-    this.section.on('client/countCards', countCards);
+    var boundCountCards = countCards.bind(this);
+    this.section.on('client/countCards', boundCountCards);
+    this.section.on('client/clearCardCount', boundClearCardCount);
     this.section.once('client/doneCountingCards', (function(clientId) {
-        this.section.removeListener('client/countCards', countCards);
+        this.section.removeListener('client/countCards', boundCountCards);
+        this.section.removeListener('client/clearCardCount', boundClearCardCount);
         this.cutPoints(pointsAccumulated);
         this.section.emit('player/doneCounting');
         this.section.emit('player/doneCounting2');
     }).bind(this));
-    console.log('COUNT HAAAAAAAAAND');
     this.section.emit('allClients', {
         event: 'countHand',
         data: {
@@ -303,6 +331,19 @@ Player.prototype.countHand = function(cutCard) {
 
 Player.prototype.countCrib = function(cutCard) {
     var pointsAccumulated = 0;
+    this.section.emit('allClients', {
+        event: 'pointsAccumulated',
+        data: pointsAccumulated
+    });
+
+    function clearCardCount() {
+        pointsAccumulated = 0;
+        this.section.emit('allClients', {
+            event: 'pointsAccumulated',
+            data: pointsAccumulated
+        });
+    }
+    var boundClearCardCount = clearCardCount.bind(this);
 
     function run(cards) {
         //check if run
@@ -419,14 +460,20 @@ Player.prototype.countCrib = function(cutCard) {
             }
         }
         console.log('pointsAccumulated: ' + pointsAccumulated);
+        this.section.emit('allClients', {
+            event: 'pointsAccumulated',
+            data: pointsAccumulated
+        });
     }
-    this.section.on('client/countCards', countCards);
+    var boundCountCards = countCards.bind(this);
+    this.section.on('client/countCards', boundCountCards);
+    this.section.on('client/clearCardCount', boundClearCardCount);
     this.section.once('client/doneCountingCards', (function(clientId) {
-        this.section.removeListener('client/countCards', countCards);
+        this.section.removeListener('client/countCards', boundCountCards);
+        this.section.removeListener('client/clearCardCount', boundClearCardCount);
         this.cutPoints(pointsAccumulated);
         this.section.emit('player/doneCribCounting');
     }).bind(this));
-    console.log('COUNT CRIBBBBBBBB');
     this.section.emit('allClients', {
         event: 'countCrib',
         data: {

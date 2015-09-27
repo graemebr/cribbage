@@ -6,6 +6,8 @@ function Sprite(img, context) {
     this.y = 0;
     this.w = this.img.width;
     this.h = this.img.height;
+    console.log('w ' + this.w);
+    console.log('h' + this.h);
     this.scale = 1;
     this.rotation = 0;
     this.subscriptionIDs = [];

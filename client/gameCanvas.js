@@ -2,7 +2,7 @@ function gameCanvas() {
     var cardImages = {};
     var backImage;
     var deckImage;
-    var deckCardImage;
+    var arrowImage;
     var canvas = document.getElementById('gameCanvas');
     var context = document.getElementById('gameCanvas').getContext('2d');
     var gamePanel = $('#gamePanel');
@@ -12,13 +12,17 @@ function gameCanvas() {
     var spriteCrib = [];
     var spritePeg = [];
     var spriteCutCard;
-    var turnText = '';
+    var turnText;
+    var pegText;
+    var pointsAccumulated;
 
     //temp!
     var check = null;
     var plus = null;
+    var clear = null;
     var checkSprite = null;
     var plusSprite = null;
+    var clearSprite = null;
 
     canvas.addEventListener('click', function(event) {
         var x = event.pageX - canvas.offsetLeft;
@@ -31,12 +35,17 @@ function gameCanvas() {
     });
 
     subpub.on('server/loadAssets', function(cards) {
+        turnText = new Text(context);
+        turnText.x = canvas.width / 2;
+        turnText.y = 50;
+        turnText.text = '...starting game...';
         var count = cards.length;
         count++; //back image
         count++; //deck image
-        count++; //deck card image
+        count++; //arrow
         count++; //check
         count++; //plus
+        count++; //clear
         cards.forEach(function(card) {
             var img = new Image();
             img.src = 'playingCards/' + card.number + '_of_' + card.suit + '.png';
@@ -50,9 +59,6 @@ function gameCanvas() {
                 }
             };
         });
-        turnText = new Text(context);
-        turnText.x = canvas.width / 2;
-        turnText.y = 50;
         backImage = new Image();
         backImage.src = 'playingCards/back.png';
         backImage.onload = function() {
@@ -73,9 +79,9 @@ function gameCanvas() {
                 });
             }
         };
-        deckCardImage = new Image();
-        deckCardImage.src = 'playingCards/deck_card.png';
-        deckCardImage.onload = function() {
+        arrowImage = new Image();
+        arrowImage.src = 'playingCards/arrow.png';
+        arrowImage.onload = function() {
             if (--count === 0) {
                 console.log('assetsLoaded');
                 subpub.emit('toServer', {
@@ -86,6 +92,16 @@ function gameCanvas() {
         plus = new Image();
         plus.src = 'playingCards/plus.png';
         plus.onload = function() {
+            if (--count === 0) {
+                console.log('assetsLoaded');
+                subpub.emit('toServer', {
+                    event: 'assetsLoaded',
+                });
+            }
+        };
+        clear = new Image();
+        clear.src = 'playingCards/clear.png';
+        clear.onload = function() {
             if (--count === 0) {
                 console.log('assetsLoaded');
                 subpub.emit('toServer', {
@@ -127,9 +143,17 @@ function gameCanvas() {
             plusSprite.unsubscribe();
             plusSprite = null;
         }
-        if (checkSprite ) {
+        if (clearSprite) {
+            clearSprite.unsubscribe();
+            clearSprite = null;
+        }
+        if (checkSprite) {
             checkSprite.unsubscribe();
             checkSprite = null;
+        }
+        if (pointsAccumulated) {
+            pointsAccumulated.unsubscribe();
+            pointsAccumulated = null;
         }
 
         data.hand.forEach(function(card) {
@@ -158,12 +182,15 @@ function gameCanvas() {
         });
     });
 
-    subpub.on('server/cardPegged', function(card) {
-        var sprite = new Sprite(cardImages[card.id], context);
+    subpub.on('server/cardPegged', function(data) {
+        var sprite = new Sprite(cardImages[data.card.id], context);
         spritePeg.push(sprite);
         sprite.x = 60 + spritePeg.length * 50;
         sprite.y = 50;
         sprite.scale = 0.2;
+        pegText.text = '' + data.cardCount;
+        pegText.x = 200 + spritePeg.length * 50;
+        pegText.y = 80;
     });
 
     subpub.on('server/newPeggingRound', function() {
@@ -171,6 +198,12 @@ function gameCanvas() {
             sprite.unsubscribe();
         });
         spritePeg = [];
+        if (!pegText) {
+            pegText = new Text(context);
+        }
+        pegText.text = '0';
+        pegText.x = 200;
+        pegText.y = 80;
     });
 
     subpub.on('server/peg', function(data) {
@@ -236,18 +269,18 @@ function gameCanvas() {
         turnText.text = data.name + ' is cutting the deck!';
         if (data.clientId === globals.clientId) {
             console.log('choosing cutCard');
-            var cardSprite = new Sprite(deckCardImage, context);
+            var cardSprite = new Sprite(arrowImage, context);
             var deckSprite = new Sprite(deckImage, context);
             deckSprite.scale = 0.2;
-            deckSprite.x = canvas.width / 2 - deckSprite.w * deckSprite.scale / 2;
-            deckSprite.y = canvas.height / 2 - deckSprite.h * deckSprite.scale / 2;
+            deckSprite.x = canvas.width - deckSprite.w * deckSprite.scale *1.5;
+            deckSprite.y = 50;
             cardSprite.scale = 0.2;
-            cardSprite.x = canvas.width / 2 + deckSprite.w * deckSprite.scale / 4;
-            cardSprite.y = canvas.height / 2;
+            cardSprite.x = deckSprite.x + deckSprite.w * deckSprite.scale;
+            cardSprite.y = deckSprite.y - (cardSprite.h * cardSprite.scale / 2);
 
             function mouseMoveCutDeck(event) {
                 var y = event.pageY - canvas.offsetTop;
-                cardSprite.y = (canvas.height / 2 - deckSprite.h * deckSprite.scale / 2) + (deckSprite.h * deckSprite.scale * 0.25 * y / canvas.height);
+                cardSprite.y = 3 + deckSprite.y - (cardSprite.h * cardSprite.scale / 2) + (deckSprite.h * deckSprite.scale * 0.25 * y / canvas.height);
             }
 
             function mouseClickCutDeck(event) {
@@ -283,9 +316,17 @@ function gameCanvas() {
             plusSprite.unsubscribe();
             plusSprite = null;
         }
-        if (checkSprite ) {
+        if (clearSprite) {
+            clearSprite.unsubscribe();
+            clearSprite = null;
+        }
+        if (checkSprite) {
             checkSprite.unsubscribe();
             checkSprite = null;
+        }
+        if (pegText) {
+            pegText.unsubscribe();
+            pegText = null;
         }
 
         if (data.clientId === globals.clientId) {
@@ -332,10 +373,10 @@ function gameCanvas() {
                 }
             };
 
-            //temp!!!!!{
+            //temp!!!!!
             plusSprite = new Sprite(plus, context);
-            plusSprite.x = canvas.width / 2;
-            plusSprite.y = canvas.height / 2;
+            plusSprite.x = 110 * 5;
+            plusSprite.y = canvas.height * 3 / 4;
             plusSprite.scale = 0.1;
             plusSprite.onClick = function() {
                 subpub.emit('toServer', {
@@ -343,8 +384,17 @@ function gameCanvas() {
                     data: selectedCards
                 });
             };
+            clearSprite = new Sprite(clear, context);
+            clearSprite.x = 110 * 6;
+            clearSprite.y = canvas.height * 3 / 4;
+            clearSprite.scale = 0.1;
+            clearSprite.onClick = function() {
+                subpub.emit('toServer', {
+                    event: 'clearCardCount'
+                });
+            };
             checkSprite = new Sprite(check, context);
-            checkSprite.x = canvas.width / 2;
+            checkSprite.x = 110 * 7;
             checkSprite.y = canvas.height * 3 / 4;
             checkSprite.scale = 0.1;
             checkSprite.onClick = function() {
@@ -369,6 +419,15 @@ function gameCanvas() {
 
     });
 
+    subpub.on('server/pointsAccumulated', function(data) {
+        if (!pointsAccumulated) {
+            pointsAccumulated = new Text(context);
+            pointsAccumulated.x = 30;
+            pointsAccumulated.y = canvas.height - 100;
+        }
+        pointsAccumulated.text = '' + data;
+    });
+
     subpub.on('server/countCrib', function(data) {
         turnText.text = data.name + ' is counting their crib!';
         spriteHand.forEach(function(card) {
@@ -387,7 +446,11 @@ function gameCanvas() {
             plusSprite.unsubscribe();
             plusSprite = null;
         }
-        if (checkSprite ) {
+        if (clearSprite) {
+            clearSprite.unsubscribe();
+            clearSprite = null;
+        }
+        if (checkSprite) {
             checkSprite.unsubscribe();
             checkSprite = null;
         }
@@ -439,8 +502,8 @@ function gameCanvas() {
 
             //temp!!!!!
             plusSprite = new Sprite(plus, context);
-            plusSprite.x = canvas.width / 2;
-            plusSprite.y = canvas.height / 2;
+            plusSprite.x = 110 * 5;
+            plusSprite.y = canvas.height * 3 / 4;
             plusSprite.scale = 0.1;
             plusSprite.onClick = function() {
                 subpub.emit('toServer', {
@@ -448,8 +511,17 @@ function gameCanvas() {
                     data: selectedCards
                 });
             };
+            clearSprite = new Sprite(clear, context);
+            clearSprite.x = 110 * 6;
+            clearSprite.y = canvas.height * 3 / 4;
+            clearSprite.scale = 0.1;
+            clearSprite.onClick = function() {
+                subpub.emit('toServer', {
+                    event: 'clearCardCount'
+                });
+            };
             checkSprite = new Sprite(check, context);
-            checkSprite.x = canvas.width / 2;
+            checkSprite.x = 110 * 7;
             checkSprite.y = canvas.height * 3 / 4;
             checkSprite.scale = 0.1;
             checkSprite.onClick = function() {
@@ -472,6 +544,13 @@ function gameCanvas() {
             });
         }
 
+    });
+
+    subpub.on('server/gameOver', function() {
+        var winText = new Text(context);
+        winText.x = canvas.width / 2;
+        winText.y = canvas.height / 2;
+        winText.text = name + "Game Over!!!";
     });
 
     function loop(time) {
