@@ -14,6 +14,12 @@ function gameCanvas() {
     var spriteCutCard;
     var turnText = '';
 
+    //temp!
+    var check = null;
+    var plus = null;
+    var checkSprite = null;
+    var plusSprite = null;
+
     canvas.addEventListener('click', function(event) {
         var x = event.pageX - canvas.offsetLeft;
         var y = event.pageY - canvas.offsetTop;
@@ -29,6 +35,8 @@ function gameCanvas() {
         count++; //back image
         count++; //deck image
         count++; //deck card image
+        count++; //check
+        count++; //plus
         cards.forEach(function(card) {
             var img = new Image();
             img.src = 'playingCards/' + card.number + '_of_' + card.suit + '.png';
@@ -75,6 +83,26 @@ function gameCanvas() {
                 });
             }
         };
+        plus = new Image();
+        plus.src = 'playingCards/plus.png';
+        plus.onload = function() {
+            if (--count === 0) {
+                console.log('assetsLoaded');
+                subpub.emit('toServer', {
+                    event: 'assetsLoaded',
+                });
+            }
+        };
+        check = new Image();
+        check.src = 'playingCards/check.png';
+        check.onload = function() {
+            if (--count === 0) {
+                console.log('assetsLoaded');
+                subpub.emit('toServer', {
+                    event: 'assetsLoaded',
+                });
+            }
+        };
     });
 
     subpub.on('server/passToCrib', function(data) {
@@ -94,6 +122,14 @@ function gameCanvas() {
         if (spriteCutCard) {
             spriteCutCard.unsubscribe();
             spriteCutCard = null;
+        }
+        if (plusSprite) {
+            plusSprite.unsubscribe();
+            plusSprite = null;
+        }
+        if (checkSprite ) {
+            checkSprite.unsubscribe();
+            checkSprite = null;
         }
 
         data.hand.forEach(function(card) {
@@ -243,6 +279,14 @@ function gameCanvas() {
             sprite.unsubscribe();
         });
         spritePeg = [];
+        if (plusSprite) {
+            plusSprite.unsubscribe();
+            plusSprite = null;
+        }
+        if (checkSprite ) {
+            checkSprite.unsubscribe();
+            checkSprite = null;
+        }
 
         if (data.clientId === globals.clientId) {
             var selectedCards = [];
@@ -288,33 +332,25 @@ function gameCanvas() {
                 }
             };
 
-            //temp!!!!!
-            var plus = new Image();
-            plus.src = 'playingCards/plus.png';
-            plus.onload = function() {
-                var sprite = new Sprite(plus, context);
-                sprite.x = canvas.width / 2;
-                sprite.y = canvas.height / 2;
-                sprite.scale = 0.1;
-                sprite.onClick = function() {
-                    subpub.emit('toServer', {
-                        event: 'countCards',
-                        data: selectedCards
-                    });
-                };
+            //temp!!!!!{
+            plusSprite = new Sprite(plus, context);
+            plusSprite.x = canvas.width / 2;
+            plusSprite.y = canvas.height / 2;
+            plusSprite.scale = 0.1;
+            plusSprite.onClick = function() {
+                subpub.emit('toServer', {
+                    event: 'countCards',
+                    data: selectedCards
+                });
             };
-            var check = new Image();
-            check.src = 'playingCards/check.png';
-            check.onload = function() {
-                var sprite2 = new Sprite(check, context);
-                sprite2.x = canvas.width / 2;
-                sprite2.y = canvas.height * 3 / 4;
-                sprite2.scale = 0.1;
-                sprite2.onClick = function() {
-                    subpub.emit('toServer', {
-                        event: 'doneCountingCards'
-                    });
-                };
+            checkSprite = new Sprite(check, context);
+            checkSprite.x = canvas.width / 2;
+            checkSprite.y = canvas.height * 3 / 4;
+            checkSprite.scale = 0.1;
+            checkSprite.onClick = function() {
+                subpub.emit('toServer', {
+                    event: 'doneCountingCards'
+                });
             };
         } else {
             var a = 0;
@@ -347,6 +383,15 @@ function gameCanvas() {
             sprite.unsubscribe();
         });
         spriteCrib = [];
+        if (plusSprite) {
+            plusSprite.unsubscribe();
+            plusSprite = null;
+        }
+        if (checkSprite ) {
+            checkSprite.unsubscribe();
+            checkSprite = null;
+        }
+
 
         if (data.clientId === globals.clientId) {
             var selectedCards = [];
@@ -393,32 +438,24 @@ function gameCanvas() {
             };
 
             //temp!!!!!
-            var plus = new Image();
-            plus.src = 'playingCards/plus.png';
-            plus.onload = function() {
-                var sprite = new Sprite(plus, context);
-                sprite.x = canvas.width / 2;
-                sprite.y = canvas.height / 2;
-                sprite.scale = 0.1;
-                sprite.onClick = function() {
-                    subpub.emit('toServer', {
-                        event: 'countCards',
-                        data: selectedCards
-                    });
-                };
+            plusSprite = new Sprite(plus, context);
+            plusSprite.x = canvas.width / 2;
+            plusSprite.y = canvas.height / 2;
+            plusSprite.scale = 0.1;
+            plusSprite.onClick = function() {
+                subpub.emit('toServer', {
+                    event: 'countCards',
+                    data: selectedCards
+                });
             };
-            var check = new Image();
-            check.src = 'playingCards/check.png';
-            check.onload = function() {
-                var sprite2 = new Sprite(check, context);
-                sprite2.x = canvas.width / 2;
-                sprite2.y = canvas.height * 3 / 4;
-                sprite2.scale = 0.1;
-                sprite2.onClick = function() {
-                    subpub.emit('toServer', {
-                        event: 'doneCountingCards'
-                    });
-                };
+            checkSprite = new Sprite(check, context);
+            checkSprite.x = canvas.width / 2;
+            checkSprite.y = canvas.height * 3 / 4;
+            checkSprite.scale = 0.1;
+            checkSprite.onClick = function() {
+                subpub.emit('toServer', {
+                    event: 'doneCountingCards'
+                });
             };
         } else {
             var a = 0;

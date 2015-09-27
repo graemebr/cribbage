@@ -11,10 +11,10 @@ function Player(clientId, name, section) {
     this.team = null;
     this.go = false;
     this.donePegging = false;
+    this.section.on('client/donePassToCrib', this.onDonePassToCrib.bind(this));
 }
 
 Player.prototype.passToCrib = function(hand, cribPlayer, cribCards) {
-    this.section.on('client/donePassToCrib', this.onDonePassToCrib.bind(this));
     this.hand = hand;
     this.unpeggedCards = hand;
     this.donePegging = false;
