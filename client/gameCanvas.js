@@ -129,7 +129,11 @@ function gameCanvas() {
         var x = 0;
         var y = canvas.height - 150;
 
-        turnText.text = "Pass card(s) to crib. " + data.cribPlayer + "'s crib!";
+        if (data.discardCribCard) {
+            turnText.text = data.cribPlayer + "'s crib! Discard one card.";
+        } else {
+            turnText.text = "Pass card(s) to crib. " + data.cribPlayer + "'s crib!";
+        }
 
         spriteHand.forEach(function(card) {
             card.sprite.unsubscribe();
@@ -170,7 +174,10 @@ function gameCanvas() {
                     if (passCards.length === passCount) {
                         subpub.emit('toServer', {
                             event: 'donePassToCrib',
-                            data: passCards
+                            data: {
+                                passedCards: passCards,
+                                discardCribCard: data.discardCribCard
+                            }
                         });
                     }
                 }
@@ -212,11 +219,14 @@ function gameCanvas() {
             var chosen = false;
             spriteHand.forEach(function(obj) {
                 obj.sprite.onClick = function() {
+                    console.log('clicked on ' + obj.card.id);
                     if (data.allowedCards.some(function(card) {
                             return card.id === obj.card.id;
                         })) {
+                        console.log('card allowed');
                         if (!chosen) {
                             chosen = true;
+                            console.log('card sent');
                             subpub.emit('toServer', {
                                 event: 'pegDone',
                                 data: obj.card
@@ -272,7 +282,7 @@ function gameCanvas() {
             var cardSprite = new Sprite(arrowImage, context);
             var deckSprite = new Sprite(deckImage, context);
             deckSprite.scale = 0.2;
-            deckSprite.x = canvas.width - deckSprite.w * deckSprite.scale *1.5;
+            deckSprite.x = canvas.width - deckSprite.w * deckSprite.scale * 1.5;
             deckSprite.y = 50;
             cardSprite.scale = 0.2;
             cardSprite.x = deckSprite.x + deckSprite.w * deckSprite.scale;
@@ -343,13 +353,13 @@ function gameCanvas() {
                 sprite.onClick = function() {
                     if (!selected) {
                         selectedCards.push(card);
-                        sprite.y -= 20;
+                        sprite.y = 50;
                         selected = true;
                     } else {
                         selectedCards = selectedCards.filter(function(card2) {
                             return card.id !== card2.id;
                         });
-                        sprite.y += 20;
+                        sprite.y = canvas.height - 150;
                         selected = false;
                     }
                 };
@@ -362,13 +372,13 @@ function gameCanvas() {
             spriteCutCard.onClick = function() {
                 if (!cutCardSelected) {
                     selectedCards.push(data.cutCard);
-                    spriteCutCard.y -= 20;
+                    spriteCutCard.x = 110*5;
                     cutCardSelected = true;
                 } else {
                     selectedCards = selectedCards.filter(function(card2) {
                         return data.cutCard.id !== card2.id;
                     });
-                    spriteCutCard.y += 20;
+                    spriteCutCard.x = canvas.width - 110;
                     cutCardSelected = false;
                 }
             };
@@ -470,13 +480,13 @@ function gameCanvas() {
                 sprite.onClick = function() {
                     if (!selected) {
                         selectedCards.push(card);
-                        sprite.y -= 20;
+                        sprite.y = 50;
                         selected = true;
                     } else {
                         selectedCards = selectedCards.filter(function(card2) {
                             return card.id !== card2.id;
                         });
-                        sprite.y += 20;
+                        sprite.y = canvas.height - 150;
                         selected = false;
                     }
                 };
@@ -489,13 +499,13 @@ function gameCanvas() {
             spriteCutCard.onClick = function() {
                 if (!cutCardSelected) {
                     selectedCards.push(data.cutCard);
-                    spriteCutCard.y -= 20;
+                    spriteCutCard.x = 110*5;
                     cutCardSelected = true;
                 } else {
                     selectedCards = selectedCards.filter(function(card2) {
                         return data.cutCard.id !== card2.id;
                     });
-                    spriteCutCard.y += 20;
+                    spriteCutCard.x = canvas.width - 110;
                     cutCardSelected = false;
                 }
             };
@@ -544,13 +554,6 @@ function gameCanvas() {
             });
         }
 
-    });
-
-    subpub.on('server/gameOver', function() {
-        var winText = new Text(context);
-        winText.x = canvas.width / 2;
-        winText.y = canvas.height / 2;
-        winText.text = name + "Game Over!!!";
     });
 
     function loop(time) {

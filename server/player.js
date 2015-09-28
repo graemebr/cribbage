@@ -7,14 +7,13 @@ function Player(clientId, name, section) {
     this.unpeggedCards = [];
     this.crib = null;
     this.section = section;
-    this.points = 0;
     this.team = null;
     this.go = false;
     this.donePegging = false;
     this.section.on('client/donePassToCrib', this.onDonePassToCrib.bind(this));
 }
 
-Player.prototype.passToCrib = function(hand, cribPlayer, cribCards) {
+Player.prototype.passToCrib = function(hand, cribPlayer, cribCards, discardCribCard) {
     this.hand = hand;
     this.unpeggedCards = hand;
     this.donePegging = false;
@@ -24,7 +23,8 @@ Player.prototype.passToCrib = function(hand, cribPlayer, cribCards) {
         event: 'passToCrib',
         data: {
             hand: this.hand,
-            cribPlayer: cribPlayer.name
+            cribPlayer: cribPlayer.name,
+            discardCribCard: discardCribCard
         }
     });
     if (this === cribPlayer) {
@@ -35,10 +35,10 @@ Player.prototype.passToCrib = function(hand, cribPlayer, cribCards) {
     }
 };
 
-Player.prototype.onDonePassToCrib = function(clientId, passedCards) {
+Player.prototype.onDonePassToCrib = function(clientId, data) {
     if (this.clientId === clientId) {
         //cards that are being passed
-        passedCards.forEach((function(passedCard) {
+        data.passedCards.forEach((function(passedCard) {
             var i = 0;
             var done = false;
             while (!done && i < this.hand.length) {
@@ -51,15 +51,11 @@ Player.prototype.onDonePassToCrib = function(clientId, passedCards) {
         }).bind(this));
         this.section.emit('player/donePassToCrib');
     }
-    if (this.crib !== null) {
-        console.log('crib me!');
-        console.log(this.hand.length);
-        console.log(this.crib.length);
-        passedCards.forEach((function(passedCard) {
+    if (this.crib !== null && !data.discardCribCard) {
+        data.passedCards.forEach((function(passedCard) {
             this.crib.push(new Card(passedCard)); //using new Card to regain prototype of passedCards. Not sure if needed really
         }).bind(this));
         if (this.crib.length === this.hand.length) {
-            console.log('crib sent!');
             this.section.emit(this.clientId, {
                 event: 'cribCards',
                 data: this.crib.length
@@ -96,13 +92,6 @@ Player.prototype.cutPoints = function(points) {
             points: points
         }
     });
-    this.points += points;
-    if (this.points > 120) {
-        this.section.emit('player/gameOver');
-        this.section.emit('allClients', {
-            event: 'gameOver'
-        });
-    }
 };
 
 Player.prototype.newPeggingRound = function() {
@@ -120,8 +109,9 @@ Player.prototype.peg = function(cardCount, callback) {
         }
     });
 
+    console.log('peg ' + this.name);
     if (allowedCards.length > 0) {
-
+        console.log('allowedCards > 0 ' + this.name);
         function pegDone(clientId, card) {
             console.log('chosen card server');
             console.log(card);
@@ -251,10 +241,10 @@ Player.prototype.countHand = function(cutCard) {
             //15
             //run
             //triple\
-            //            var triple;
-            if (cards[0].number === cards[1].number && cards[0].number === cards[2].number) {
-                pointsAccumulated += 6;
-            }
+            // //            var triple;
+            // if (cards[0].number === cards[1].number && cards[0].number === cards[2].number) {
+            //     pointsAccumulated += 6;
+            // }
             if ((cards[0].value + cards[1].value + cards[2].value) === 15) {
                 pointsAccumulated += 2;
             }
@@ -269,10 +259,10 @@ Player.prototype.countHand = function(cutCard) {
             //flush (no cutCard)
             //15
             //run 4
-            //quadruple
-            if (cards[0].number === cards[1].number && cards[0].number === cards[2].number && cards[0].number === cards[3].number) {
-                pointsAccumulated += 12;
-            }
+            // //quadruple
+            // if (cards[0].number === cards[1].number && cards[0].number === cards[2].number && cards[0].number === cards[3].number) {
+            //     pointsAccumulated += 12;
+            // }
             if ((cards[0].value + cards[1].value + cards[2].value + cards[3].value) === 15) {
                 pointsAccumulated += 2;
             }
@@ -407,11 +397,11 @@ Player.prototype.countCrib = function(cutCard) {
         if (cards.length === 3) {
             //15
             //run
-            //triple\
-            //            var triple;
-            if (cards[0].number === cards[1].number && cards[0].number === cards[2].number) {
-                pointsAccumulated += 6;
-            }
+            // //triple\
+            // //            var triple;
+            // if (cards[0].number === cards[1].number && cards[0].number === cards[2].number) {
+            //     pointsAccumulated += 6;
+            // }
             if ((cards[0].value + cards[1].value + cards[2].value) === 15) {
                 pointsAccumulated += 2;
             }
@@ -426,10 +416,10 @@ Player.prototype.countCrib = function(cutCard) {
             //flush (no cutCard)
             //15
             //run 4
-            //quadruple
-            if (cards[0].number === cards[1].number && cards[0].number === cards[2].number && cards[0].number === cards[3].number) {
-                pointsAccumulated += 12;
-            }
+            // //quadruple
+            // if (cards[0].number === cards[1].number && cards[0].number === cards[2].number && cards[0].number === cards[3].number) {
+            //     pointsAccumulated += 12;
+            // }
             if ((cards[0].value + cards[1].value + cards[2].value + cards[3].value) === 15) {
                 pointsAccumulated += 2;
             }

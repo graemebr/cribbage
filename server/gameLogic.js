@@ -88,12 +88,16 @@ GameLogic.prototype.passToCrib = function() {
     if (this.roundPlayers.length === 3) {
         dealCardsToCrib = 1;
     }
-    var deltCribCards = this.deck.dealHand(dealCardsToCrib);
-    this.roundPlayers.forEach((function(player) {
-        //send players their hands
-        player.passToCrib(this.deck.dealHand(numCards), this.roundPlayers[this.cribIndex], deltCribCards);
-    }).bind(this));
 
+    var deltCribCards = this.deck.dealHand(dealCardsToCrib);
+
+    var index = this.cribIndex;
+    var count = 0; //keep track of whether player should discard to crib or not
+    while (count < this.roundPlayers.length) {
+        index = this.nextIndex(index);
+        this.roundPlayers[index].passToCrib(this.deck.dealHand(numCards), this.roundPlayers[this.cribIndex], deltCribCards, count > 3);
+        count++;
+    }
 };
 
 GameLogic.prototype.cutDeck = function() {
